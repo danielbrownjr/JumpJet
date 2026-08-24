@@ -1,0 +1,17 @@
+cmake_minimum_required(VERSION 3.16)
+execute_process(COMMAND git describe --tags --always --dirty
+    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+    OUTPUT_VARIABLE JJ_VERSION OUTPUT_STRIP_TRAILING_WHITESPACE ERROR_QUIET)
+if(NOT JJ_VERSION)
+    set(JJ_VERSION "development")
+endif()
+set(PROJECT_VER "${JJ_VERSION}")
+include($ENV{IDF_PATH}/tools/cmake/project.cmake)
+project(jumpjet)
+foreach(jj_component jj_interlock jj_portal)
+    if(TARGET __idf_${jj_component})
+        target_compile_options(__idf_${jj_component} PRIVATE -Wall -Wextra -Werror)
+    else()
+        message(FATAL_ERROR "Jump Jet component ${jj_component} was not discovered")
+    endif()
+endforeach()

@@ -1,0 +1,63 @@
+name: firmware-build
+
+on:
+  push:
+    paths:
+      - 'components/**'
+      - 'main/**'
+      - 'tests/**'
+      - 'CMakeLists.txt'
+      - 'partitions.csv'
+      - 'sdkconfig.defaults'
+      - '.github/workflows/firmware-build.yml'
+  pull_request:
+    paths:
+      - 'components/**'
+      - 'main/**'
+      - 'tests/**'
+      - 'CMakeLists.txt'
+      - 'partitions.csv'
+      - 'sdkconfig.defaults'
+      - '.github/workflows/firmware-build.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test-and-build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out source
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+
+      - name: Test heater interlock state machine
+        run: ./tests/run_interlock_host_test.sh
+
+      - name: Reject whitespace errors
+        run: git diff --check
+
+      - name: Static analysis
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y cppcheck
+          cppcheck \
+            --enable=warning,performance,portability \
+            --suppress=missingInclude \
+            --suppress=missingIncludeSystem \
+            --error-exitcode=2 \
+            --std=c11 \
+            -Icomponents/jj_interlock/include \
+            -Icomponents/jj_portal/include \
+            components/ main/
+
+      - name: Build ESP32-S3 firmware (ESP-IDF v5.3)
+        uses: espressif/esp-idf-ci-action@9d38657f3d789ca759b2b37aaf5ceffbc42c4f0d # v1
+        with:
+          esp_idf_version: v5.3
+          target: esp32s3
+          path: '.'
