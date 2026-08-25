@@ -1,21 +1,21 @@
 dependencies:
   dc_evlog:
-    git: https://github.com/justinh-rahb/dragon-core.git
+    git: https://github.com/danielbrownjr/dragon-core.git
     path: components/dc_evlog
-    version: 10fc3ed78bbb5dd6287bfb0d022708ead1a44635
+    version: a29e6c5b58fde914b9f0bd80f55b86b13c28b5b3
   dc_prusa:
-    git: https://github.com/justinh-rahb/dragon-core.git
+    git: https://github.com/danielbrownjr/dragon-core.git
     path: components/dc_prusa
-    version: 10fc3ed78bbb5dd6287bfb0d022708ead1a44635
+    version: a29e6c5b58fde914b9f0bd80f55b86b13c28b5b3
   dc_ui:
-    git: https://github.com/justinh-rahb/dragon-core.git
+    git: https://github.com/danielbrownjr/dragon-core.git
     path: components/dc_ui
-    version: 10fc3ed78bbb5dd6287bfb0d022708ead1a44635
+    version: a29e6c5b58fde914b9f0bd80f55b86b13c28b5b3
   dc_portal:
-    git: https://github.com/justinh-rahb/dragon-core.git
+    git: https://github.com/danielbrownjr/dragon-core.git
     path: components/dc_portal
-    version: 10fc3ed78bbb5dd6287bfb0d022708ead1a44635
+    version: a29e6c5b58fde914b9f0bd80f55b86b13c28b5b3
   dc_wifi:
-    git: https://github.com/justinh-rahb/dragon-core.git
+    git: https://github.com/danielbrownjr/dragon-core.git
     path: components/dc_wifi
-    version: 10fc3ed78bbb5dd6287bfb0d022708ead1a44635
+    version: a29e6c5b58fde914b9f0bd80f55b86b13c28b5b3

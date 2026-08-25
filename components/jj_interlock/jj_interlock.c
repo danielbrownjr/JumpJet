@@ -75,8 +75,8 @@ jj_outputs_t jj_interlock_step(jj_interlock_t *state, const jj_inputs_t *input)
     if (input->mode == JJ_MODE_AUTO) {
         if (!input->printer.online)
             return blocked(state, JJ_BLOCK_PRINTER_OFFLINE, input);
-        if (input->printer.sample_ms > input->now_ms ||
-            input->now_ms - input->printer.sample_ms > state->config.printer_stale_ms)
+        if (input->printer.sample_age_ms == UINT32_MAX ||
+            input->printer.sample_age_ms > state->config.printer_stale_ms)
             return blocked(state, JJ_BLOCK_PRINTER_STALE, input);
         if (!input->printer.printing)
             return blocked(state, JJ_BLOCK_PRINTER_STOPPED, input);

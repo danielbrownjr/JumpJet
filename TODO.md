@@ -20,13 +20,14 @@ implementation starts, and keep only the summary checkbox here.
 
 ## Firmware — immediate
 
-- [ ] Add last-success sample timing to `dc_prusa_status_t` in Dan's `dragon-core` fork
-- [ ] Test that only a complete, atomically parsed PrusaLink sample refreshes freshness
-- [ ] Submit the freshness API change upstream and pin Jump Jet to the reviewed commit
+- [x] Add last-success sample age to `dc_prusa_status_t` in Dan's `dragon-core` fork
+- [x] Test that only a complete, atomically parsed PrusaLink sample refreshes freshness
+- [x] Submit the freshness API upstream in `dragon-core` PR #51 and pin Jump Jet to its green commit
+- [ ] After PR #51 merges, repin Jump Jet to the resulting upstream commit or release tag
 - [ ] Replace provisional AUTO thresholds with named, validated settings; keep heat disabled
 - [ ] Define printer states that count as actively printing for CORE One Buddy firmware
 - [ ] Add configuration validation tests for PrusaLink host, port, and secret retention
-- [ ] Add host tests for future timestamps, exact stale boundaries, invalid targets, and fault-clear temperature boundaries
+- [ ] Add host tests for exact stale boundaries, unavailable sample age, invalid targets, and fault-clear temperature boundaries
 - [ ] Add API contract tests for truthful capabilities and cold-safe state
 
 ## Electrical and safety analysis

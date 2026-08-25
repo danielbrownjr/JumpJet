@@ -38,10 +38,9 @@ the bed target meets the configured policy threshold. Losing any prerequisite
 requests zero heater output. Filament type is not inferred because PrusaLink does
 not expose it.
 
-`dc_prusa` v0.28.2 does not yet expose the monotonic time of its last successful
-sample. The foundation therefore supplies an unknown/zero sample time, which makes
-AUTO fail stale even if the connection currently reports online. The next
-`dragon-core` change must add a last-success timestamp (or sample age) to
-`dc_prusa_status_t`, update it only after a complete atomic parse, and test that
-failed/partial polls never refresh it. Jump Jet must remain pinned cold until it
-consumes that reviewed interface.
+`dc_prusa` now exposes `status_age_ms`, updated only after a complete atomic
+PrusaLink status parse and set to `UINT32_MAX` when no complete sample is available.
+Jump Jet passes that age directly into its product-owned interlock. The interlock
+fails AUTO cold when the age exceeds 12 seconds, which is intentionally stricter
+than dc_prusa's 15-second transport-level expiration backstop. The change is pinned
+from Dan's fork while upstream `dragon-core` PR #51 is under review.

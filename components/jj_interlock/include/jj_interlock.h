@@ -22,7 +22,7 @@ typedef struct {
     bool online;
     bool printing;
     float bed_target_c;
-    uint64_t sample_ms;
+    uint32_t sample_age_ms;  // UINT32_MAX when no complete sample is available
 } jj_printer_sample_t;
 typedef struct {
     float maximum_target_c;
@@ -33,7 +33,6 @@ typedef struct {
     uint32_t printer_stale_ms;
 } jj_interlock_config_t;
 typedef struct {
-    uint64_t now_ms;
     bool commissioned;
     jj_mode_t mode;
     float requested_target_c;

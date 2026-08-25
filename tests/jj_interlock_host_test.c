@@ -8,12 +8,12 @@
 static jj_inputs_t nominal(void)
 {
     return (jj_inputs_t){
-        .now_ms = 100000, .commissioned = true, .mode = JJ_MODE_AUTO,
+        .commissioned = true, .mode = JJ_MODE_AUTO,
         .chamber = {.status = JJ_SENSOR_OK, .temperature_c = 30.0f},
         .outlet = {.status = JJ_SENSOR_OK, .temperature_c = 35.0f},
         .case_sensor = {.status = JJ_SENSOR_OK, .temperature_c = 36.0f},
         .printer = {.online = true, .printing = true, .bed_target_c = 100.0f,
-                    .sample_ms = 100000},
+                    .sample_age_ms = 0},
         .fan_proven = true,
     };
 }
@@ -46,7 +46,11 @@ static void test_auto_fails_cold_on_printer_conditions(void)
     jj_interlock_t state; jj_inputs_t input = nominal();
     jj_interlock_init(&state, NULL); input.printer.online = false;
     CHECK(jj_interlock_step(&state, &input).block_reason == JJ_BLOCK_PRINTER_OFFLINE);
-    jj_interlock_init(&state, NULL); input = nominal(); input.printer.sample_ms -= 12001;
+    jj_interlock_init(&state, NULL); input = nominal(); input.printer.sample_age_ms = 12000;
+    CHECK(jj_interlock_step(&state, &input).heater_requested);
+    jj_interlock_init(&state, NULL); input = nominal(); input.printer.sample_age_ms = 12001;
+    CHECK(jj_interlock_step(&state, &input).block_reason == JJ_BLOCK_PRINTER_STALE);
+    jj_interlock_init(&state, NULL); input = nominal(); input.printer.sample_age_ms = UINT32_MAX;
     CHECK(jj_interlock_step(&state, &input).block_reason == JJ_BLOCK_PRINTER_STALE);
     jj_interlock_init(&state, NULL); input = nominal(); input.printer.printing = false;
     CHECK(jj_interlock_step(&state, &input).block_reason == JJ_BLOCK_PRINTER_STOPPED);

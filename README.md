@@ -35,9 +35,10 @@ API behavior, and all heater safety policy local to Jump Jet.
 The current milestone is deliberately **cold-safe**:
 
 - ESP32-S3 ESP-IDF application skeleton
-- all selected `dragon-core` components pinned to commit
-  `10fc3ed78bbb5dd6287bfb0d022708ead1a44635` (`v0.28.2`)
-- `dc_wifi`, `dc_portal`, `dc_ui`, `dc_evlog`, and read-only `dc_prusa` integration
+- all selected `dragon-core` components temporarily pinned to freshness commit
+  `a29e6c5b58fde914b9f0bd80f55b86b13c28b5b3` from Dan's fork, pending upstream dragon-core PR #51
+- `dc_wifi`, `dc_portal`, `dc_ui`, `dc_evlog`, and freshness-aware,
+  read-only `dc_prusa` integration
 - Jump Jet identity and truthful, read-only API v2 status
 - pure-C interlock model with host tests for stale/offline/stopped printer state,
   low bed target, sensor faults, overtemperature, cooldown, and safe fault clearing

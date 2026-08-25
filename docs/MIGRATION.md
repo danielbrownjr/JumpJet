@@ -15,5 +15,5 @@ upstream historical reference.
 
 The first milestone is intentionally cold-safe. A later hardware-commissioning
 milestone will add ADC, fan, and heater drivers behind the tested interlock.
-PrusaLink AUTO also remains blocked until `dc_prusa` exposes a trustworthy last-
-successful-sample time rather than only its current connection enum.
+PrusaLink status age now flows from `dc_prusa` into the product interlock, but AUTO
+remains disabled until the hardware is reviewed and commissioned.

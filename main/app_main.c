@@ -10,7 +10,6 @@
 #include "esp_check.h"
 #include "esp_log.h"
 #include "esp_ota_ops.h"
-#include "esp_timer.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "nvs_flash.h"
@@ -31,9 +30,7 @@ static void control_task(void *arg)
     for (;;) {
         dc_prusa_status_t printer = {0};
         (void)dc_prusa_get_status(&printer);
-        const uint64_t now_ms = (uint64_t)(esp_timer_get_time() / 1000);
         const jj_inputs_t input = {
-            .now_ms = now_ms,
             .commissioned = false,
             .mode = JJ_MODE_OFF,
             .requested_target_c = 0.0f,
@@ -44,9 +41,9 @@ static void control_task(void *arg)
                 .online = printer.online,
                 .printing = printer_is_printing(printer.printer_state),
                 .bed_target_c = printer.bed_target,
-                // dc_prusa v0.28.2 does not expose last-success time. Zero keeps
-                // AUTO stale/fail-cold until that board-neutral API is added.
-                .sample_ms = 0,
+                // dc_prusa returns UINT32_MAX until a complete status is available.
+                // The product interlock independently applies its stricter 12 s limit.
+                .sample_age_ms = printer.status_age_ms,
             },
         };
         const jj_outputs_t output = jj_interlock_step(&s_interlock, &input);
