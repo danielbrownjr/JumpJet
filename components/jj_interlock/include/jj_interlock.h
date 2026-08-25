@@ -3,20 +3,40 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-typedef enum { JJ_MODE_OFF = 0, JJ_MODE_MANUAL, JJ_MODE_AUTO } jj_mode_t;
 typedef enum {
-    JJ_SENSOR_OK = 0, JJ_SENSOR_UNAVAILABLE, JJ_SENSOR_OPEN,
-    JJ_SENSOR_SHORT, JJ_SENSOR_IMPLAUSIBLE,
+    JJ_MODE_OFF = 0,  /**< Heating is disabled; safe cooldown behavior may continue. */
+    JJ_MODE_MANUAL,   /**< Use the locally requested chamber target. */
+    JJ_MODE_AUTO,     /**< Derive heating permission and target from printer status and policy. */
+} jj_mode_t;
+
+typedef enum {
+    JJ_SENSOR_OK = 0,      /**< A fresh, finite temperature sample is valid for safety decisions. */
+    JJ_SENSOR_UNAVAILABLE, /**< No complete sensor sample is currently available. */
+    JJ_SENSOR_OPEN,        /**< The sensor circuit is electrically consistent with an open circuit. */
+    JJ_SENSOR_SHORT,       /**< The sensor circuit is electrically consistent with a short circuit. */
+    JJ_SENSOR_IMPLAUSIBLE, /**< Conversion is non-finite or outside the configured physically credible range. */
 } jj_sensor_status_t;
+
 typedef enum {
-    JJ_FAULT_NONE = 0, JJ_FAULT_SENSOR, JJ_FAULT_OVERTEMPERATURE,
-    JJ_FAULT_FAN, JJ_FAULT_NO_HEAT, JJ_FAULT_UNCONTROLLED_RISE,
+    JJ_FAULT_NONE = 0,          /**< No safety fault is latched. */
+    JJ_FAULT_SENSOR,            /**< One or more required temperature sensors are not JJ_SENSOR_OK. */
+    JJ_FAULT_OVERTEMPERATURE,   /**< A monitored temperature reached its hard safety limit. */
+    JJ_FAULT_FAN,               /**< Required airflow could not be proven while heating was requested. */
+    JJ_FAULT_NO_HEAT,           /**< Temperature failed to rise as expected while heating was requested. */
+    JJ_FAULT_UNCONTROLLED_RISE, /**< Temperature rose abnormally while heater output was not requested. */
 } jj_fault_t;
+
 typedef enum {
-    JJ_BLOCK_NONE = 0, JJ_BLOCK_OFF, JJ_BLOCK_NOT_COMMISSIONED,
-    JJ_BLOCK_FAULT_LATCHED, JJ_BLOCK_PRINTER_OFFLINE, JJ_BLOCK_PRINTER_STALE,
-    JJ_BLOCK_PRINTER_STOPPED, JJ_BLOCK_BED_TARGET_LOW,
+    JJ_BLOCK_NONE = 0,             /**< No interlock condition is blocking a heater request. */
+    JJ_BLOCK_OFF,                  /**< Heating is blocked because the selected mode or target is off. */
+    JJ_BLOCK_NOT_COMMISSIONED,     /**< Heating is blocked until hardware commissioning is complete. */
+    JJ_BLOCK_FAULT_LATCHED,        /**< Heating is blocked by a latched safety fault. */
+    JJ_BLOCK_PRINTER_OFFLINE,      /**< AUTO heating is blocked because the printer is disconnected. */
+    JJ_BLOCK_PRINTER_STALE,        /**< AUTO heating is blocked because printer data is missing or too old. */
+    JJ_BLOCK_PRINTER_STOPPED,      /**< AUTO heating is blocked because the printer is not printing. */
+    JJ_BLOCK_BED_TARGET_LOW,       /**< AUTO heating is blocked because the bed target is below policy. */
 } jj_block_reason_t;
+
 typedef struct { jj_sensor_status_t status; float temperature_c; } jj_sensor_sample_t;
 typedef struct {
     bool online;
