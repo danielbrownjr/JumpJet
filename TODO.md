@@ -62,6 +62,7 @@ implementation starts, and keep only the summary checkbox here.
 - [ ] Add chamber, outlet, and case temperature telemetry with sensor status
 - [ ] Add target, heater duty, both fan states, mode, and commissioning state
 - [ ] Add PrusaLink connection, printer state, bed temperature/target, and sample age
+- [ ] Define optional Klipper/Moonraker integration for read-only printer state and bed-target telemetry, with the same stale-data fail-cold semantics as PrusaLink
 - [ ] Add visible interlocks, latched fault reason, and safe recovery guidance
 - [ ] Add settings for PrusaLink and the bed-target policy with strict bounds
 - [ ] Add revision/lease semantics for remote heat commands if manual remote heat is retained
