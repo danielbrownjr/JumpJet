@@ -97,8 +97,8 @@ ESP-IDF 5.3 or newer with ESP32-S3 tools is required:
 
 ## Contributors and sponsorship
 
-- [Daniel Brown](https://github.com/danielbrownjr) — project and firmware
-- [Mauker](https://github.com/Mauker1) — project, hardware, and mechanical design
+- [Daniel Brown](https://github.com/danielbrownjr) — project, firmware, and hardware
+- [Mauker](https://github.com/Mauker1) — project and mechanical design
 - [Philip Sørensen](https://github.com/philip-soerensen) — original Jetpack project
 - PCB fabrication sponsorship: [PCBWay](https://www.pcbway.com/)
 
