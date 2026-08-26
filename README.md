@@ -35,8 +35,8 @@ API behavior, and all heater safety policy local to Jump Jet.
 The current milestone is deliberately **cold-safe**:
 
 - ESP32-S3 ESP-IDF application skeleton
-- all selected `dragon-core` components temporarily pinned to freshness commit
-  `a29e6c5b58fde914b9f0bd80f55b86b13c28b5b3` from Dan's fork, pending upstream dragon-core PR #51
+- selected `dragon-core` components pinned to upstream commit
+  `deeda5ef44fb8fbe78f908baab4b62f4486f2f0d`, which includes merged PrusaLink freshness work from PR #51
 - `dc_wifi`, `dc_portal`, `dc_ui`, `dc_evlog`, and freshness-aware,
   read-only `dc_prusa` integration
 - Jump Jet identity and truthful, read-only API v2 status
@@ -97,10 +97,10 @@ ESP-IDF 5.3 or newer with ESP32-S3 tools is required:
 
 ## Contributors and sponsorship
 
-- [Daniel Brown](https://github.com/danielbrownjr) — project, firmware, and hardware
-- [Mauker](https://github.com/Mauker1) — project and mechanical design
-- [Philip Sørensen](https://github.com/philip-soerensen) — original Jetpack project
-- PCB fabrication sponsorship: [PCBWay](https://www.pcbway.com/)
+- [Dan](https://github.com/danielbrownjr)
+- [Mauker](https://github.com/Mauker1)
+- Original Jetpack project: [Philip Sørensen](https://github.com/philip-soerensen)
+- PCB fabrication sponsored by [PCBWay](https://www.pcbway.com/)
 
 Jump Jet is an independent community project. It is not affiliated with or
 endorsed by Prusa Research or the original Jetpack author.
