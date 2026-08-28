@@ -1,0 +1,3 @@
+set(JJ_IDENTITY_PRODUCT_ID "jumpjet")
+set(JJ_IDENTITY_DISPLAY_NAME "Jump Jet")
+set(JJ_IDENTITY_AP_SSID_PREFIX "JumpJet_")

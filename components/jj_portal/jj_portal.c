@@ -3,6 +3,7 @@
 #include "cJSON.h"
 #include "dc_portal.h"
 #include "dc_prusa.h"
+#include "jj_identity.h"
 #include "esp_app_desc.h"
 #include "esp_http_server.h"
 #include "esp_log.h"
@@ -37,8 +38,8 @@ static esp_err_t info_get(httpd_req_t *req)
     cJSON_AddStringToObject(root, "project", esp_app_get_description()->project_name);
     cJSON *ui = cJSON_AddObjectToObject(root, "ui");
     cJSON_AddNumberToObject(ui, "schema", 1);
-    cJSON_AddStringToObject(ui, "product", "jumpjet");
-    cJSON_AddStringToObject(ui, "display_name", "Jump Jet");
+    cJSON_AddStringToObject(ui, "product", JJ_IDENTITY_PRODUCT_ID);
+    cJSON_AddStringToObject(ui, "display_name", JJ_IDENTITY_DISPLAY_NAME);
     cJSON *capabilities = cJSON_AddArrayToObject(root, "capabilities");
     cJSON_AddItemToArray(capabilities, cJSON_CreateString("source_status"));
     cJSON_AddItemToArray(capabilities, cJSON_CreateString("polling"));
@@ -220,8 +221,8 @@ static esp_err_t validate_image(const esp_app_desc_t *image, void *ctx,
     // Independent post-upload recheck immediately before core selects the image.
     esp_err_t err = heater_off_guard(message, message_size);
     if (err != ESP_OK) return err;
-    if (strcmp(image->project_name, "jumpjet") == 0) return ESP_OK;
-    snprintf(message, message_size, "Not a Jump Jet firmware image.");
+    if (strcmp(image->project_name, JJ_IDENTITY_PRODUCT_ID) == 0) return ESP_OK;
+    snprintf(message, message_size, "Not a %s firmware image.", JJ_IDENTITY_DISPLAY_NAME);
     return ESP_ERR_INVALID_ARG;
 }
 
@@ -237,14 +238,14 @@ esp_err_t jj_portal_start(jj_interlock_t *interlock)
     s_interlock = interlock;
     uint8_t mac[6] = {0};
     esp_read_mac(mac, ESP_MAC_WIFI_STA);
-    snprintf(s_device_id, sizeof(s_device_id), "jumpjet-%02x%02x%02x",
+    snprintf(s_device_id, sizeof(s_device_id), JJ_IDENTITY_DEVICE_ID_PREFIX "%02x%02x%02x",
              mac[3], mac[4], mac[5]);
     httpd_config_t http = HTTPD_DEFAULT_CONFIG();
     http.max_uri_handlers = 24;
     http.lru_purge_enable = true;
     const dc_portal_config_t config = {
-        .product = "jumpjet",
-        .display_name = "Jump Jet",
+        .product = JJ_IDENTITY_PRODUCT_ID,
+        .display_name = JJ_IDENTITY_DISPLAY_NAME,
         .register_product_routes = register_routes,
         .describe_product = describe_product,
         .apply_product = apply_product,

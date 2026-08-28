@@ -5,6 +5,7 @@
 #include "dc_evlog.h"
 #include "dc_prusa.h"
 #include "dc_wifi.h"
+#include "jj_identity.h"
 #include "jj_interlock.h"
 #include "jj_portal.h"
 #include "esp_check.h"
@@ -15,7 +16,7 @@
 #include "nvs_flash.h"
 #include <string.h>
 
-static const char *TAG = "jumpjet";
+static const char *TAG = JJ_IDENTITY_PRODUCT_ID;
 static jj_interlock_t s_interlock;
 
 static bool printer_is_printing(const char *state)
@@ -60,7 +61,7 @@ void app_main(void)
 {
     dc_evlog_console_init();
     dc_evlog_init();
-    ESP_LOGI(TAG, "Jump Jet cold-safe foundation starting");
+    ESP_LOGI(TAG, "%s cold-safe foundation starting", JJ_IDENTITY_DISPLAY_NAME);
     esp_err_t err = nvs_flash_init();
     if (err == ESP_ERR_NVS_NO_FREE_PAGES || err == ESP_ERR_NVS_NEW_VERSION_FOUND) {
         ESP_ERROR_CHECK(nvs_flash_erase());
@@ -72,9 +73,9 @@ void app_main(void)
     BaseType_t created = xTaskCreate(control_task, "jj_control", 4096, NULL, 8, NULL);
     ESP_ERROR_CHECK(created == pdPASS ? ESP_OK : ESP_ERR_NO_MEM);
     const dc_wifi_identity_t identity = {
-        .hostname = "jumpjet",
-        .instance_name = "Jump Jet",
-        .ap_ssid_prefix = "JumpJet_",
+        .hostname = JJ_IDENTITY_HOSTNAME,
+        .instance_name = JJ_IDENTITY_DISPLAY_NAME,
+        .ap_ssid_prefix = JJ_IDENTITY_AP_SSID_PREFIX,
         .ap_password = DC_WIFI_DEFAULT_AP_PASSWORD,
     };
     ESP_ERROR_CHECK(dc_wifi_set_identity(&identity));
