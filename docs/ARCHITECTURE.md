@@ -19,7 +19,9 @@ into `dragon-core` merely to reduce application code.
 2. Initialize the interlock with heat disabled.
 3. Start the control/safety task.
 4. Start Wi-Fi, read-only PrusaLink polling, and the management portal.
-5. Mark a pending OTA image valid only after the cold-safe runtime is healthy.
+5. Wait for the control task to complete a cold-safe interlock cycle and verify its
+   synchronized output snapshot still requests zero heat and a zero target.
+6. Mark a pending OTA image valid only after those services and checks succeed.
 
 The foundation image has no actuator driver and cannot energize the heater.
 
@@ -37,6 +39,19 @@ PrusaLink is online, its sample is fresh, printer state is actively printing, an
 the bed target meets the configured policy threshold. Losing any prerequisite
 requests zero heater output. Filament type is not inferred because PrusaLink does
 not expose it.
+
+Zero-filled sensor status is deliberately unavailable, not valid. Blocked/fault
+cooling stops only when every required sensor is valid, finite, and at or below
+the cooldown release threshold; partial or complete temperature uncertainty keeps
+the fan request at 100%. Fan proof is modeled separately as unavailable, pending,
+proven, or failed so startup can request airflow without falsely latching a proof
+failure. The proof mechanism, timeout, and physical thresholds remain Phase-2/3
+hardware obligations.
+
+The abstract interlock has separate chamber, outlet, and case hard-trip fields.
+All three currently use the same conservative 72 C placeholder solely to establish
+the safety architecture. These are not characterized release limits and must be
+replaced from thermal evidence before heater actuation is permitted.
 
 `dc_prusa` now exposes `status_age_ms`, updated only after a complete atomic
 PrusaLink status parse and set to `UINT32_MAX` when no complete sample is available.

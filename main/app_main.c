@@ -26,28 +26,25 @@ static bool printer_is_printing(const char *state)
 
 static void control_task(void *arg)
 {
-    (void)arg;
+    TaskHandle_t startup_task = (TaskHandle_t)arg;
+    bool startup_reported = false;
     jj_block_reason_t previous = JJ_BLOCK_NONE;
     for (;;) {
-        dc_prusa_status_t printer = {0};
-        (void)dc_prusa_get_status(&printer);
-        const jj_inputs_t input = {
-            .commissioned = false,
-            .mode = JJ_MODE_OFF,
-            .requested_target_c = 0.0f,
-            .chamber = {.status = JJ_SENSOR_UNAVAILABLE},
-            .outlet = {.status = JJ_SENSOR_UNAVAILABLE},
-            .case_sensor = {.status = JJ_SENSOR_UNAVAILABLE},
-            .printer = {
-                .online = printer.online,
-                .printing = printer_is_printing(printer.printer_state),
-                .bed_target_c = printer.bed_target,
-                // dc_prusa returns UINT32_MAX until a complete status is available.
-                // The product interlock independently applies its stricter 12 s limit.
-                .sample_age_ms = printer.status_age_ms,
-            },
-        };
+        jj_inputs_t input = jj_inputs_safe_defaults();
+        dc_prusa_status_t printer = {.status_age_ms = UINT32_MAX};
+        if (dc_prusa_get_status(&printer) == ESP_OK) {
+            input.printer.online = printer.online;
+            input.printer.printing = printer_is_printing(printer.printer_state);
+            input.printer.bed_target_c = printer.bed_target;
+            // dc_prusa returns UINT32_MAX until a complete status is available.
+            // The product interlock independently applies its stricter 12 s limit.
+            input.printer.sample_age_ms = printer.status_age_ms;
+        }
         const jj_outputs_t output = jj_interlock_step(&s_interlock, &input);
+        if (!startup_reported) {
+            startup_reported = true;
+            xTaskNotifyGive(startup_task);
+        }
         if (output.block_reason != previous) {
             dc_evlog_add("interlock: %s", jj_block_reason_str(output.block_reason));
             previous = output.block_reason;
@@ -70,7 +67,8 @@ void app_main(void)
     ESP_ERROR_CHECK(err);
     const jj_interlock_config_t config = jj_interlock_default_config();
     jj_interlock_init(&s_interlock, &config);
-    BaseType_t created = xTaskCreate(control_task, "jj_control", 4096, NULL, 8, NULL);
+    BaseType_t created = xTaskCreate(control_task, "jj_control", 4096,
+                                     xTaskGetCurrentTaskHandle(), 8, NULL);
     ESP_ERROR_CHECK(created == pdPASS ? ESP_OK : ESP_ERR_NO_MEM);
     const dc_wifi_identity_t identity = {
         .hostname = JJ_IDENTITY_HOSTNAME,
@@ -82,6 +80,12 @@ void app_main(void)
     ESP_ERROR_CHECK(dc_wifi_start());
     ESP_ERROR_CHECK(dc_prusa_start());
     ESP_ERROR_CHECK(jj_portal_start(&s_interlock));
+    ESP_ERROR_CHECK(ulTaskNotifyTake(pdTRUE, pdMS_TO_TICKS(2000)) > 0 ?
+                    ESP_OK : ESP_ERR_TIMEOUT);
+    const jj_outputs_t startup_output = jj_interlock_snapshot(&s_interlock);
+    ESP_ERROR_CHECK(!startup_output.heater_requested &&
+                    startup_output.effective_target_c == 0.0f ?
+                    ESP_OK : ESP_ERR_INVALID_STATE);
     const esp_partition_t *running = esp_ota_get_running_partition();
     esp_ota_img_states_t state;
     if (running && esp_ota_get_state_partition(running, &state) == ESP_OK &&
