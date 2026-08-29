@@ -40,6 +40,7 @@ protection question. Firmware constants may not be finalized before this gate.
 - implement calibrated ADC/thermistor conversion with open, short, rail, NaN, and
   implausible-reading classification
 - implement both fan outputs and any available tachometer or airflow feedback
+- define the bounded fan-start/proof sequence and explicit proof-failure criteria from release-intent hardware evidence
 - implement the physical switch and define its electrical and software semantics
 - persist settings with bounds, schema versioning, corrupt-value fallback, and factory reset
 - add HIL hooks that cannot compile into production images
@@ -55,6 +56,7 @@ sensor and reset fault injection cannot energize the heater.
 - implement bounded PWM and anti-windup PID without bypassing the interlock
 - latch overtemperature, sensor, fan/airflow, failure-to-heat, uncontrolled-rise,
   watchdog, and detectable stuck-on faults
+- replace the provisional chamber, outlet, and case hard-trip ceilings with separately characterized limits
 - define cooldown behavior for normal stop, fault, reboot, brownout, and lost control source
 - require deliberate, safe-condition acknowledgement before clearing latched faults
 - characterize thermal response and derive thresholds from measurements rather than guesses

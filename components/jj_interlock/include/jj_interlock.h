@@ -10,12 +10,19 @@ typedef enum {
 } jj_mode_t;
 
 typedef enum {
-    JJ_SENSOR_OK = 0,      /**< A fresh, finite temperature sample is valid for safety decisions. */
-    JJ_SENSOR_UNAVAILABLE, /**< No complete sensor sample is currently available. */
+    JJ_SENSOR_UNAVAILABLE = 0, /**< No complete sensor sample is currently available. */
+    JJ_SENSOR_OK,          /**< A fresh, finite temperature sample is valid for safety decisions. */
     JJ_SENSOR_OPEN,        /**< The sensor circuit is electrically consistent with an open circuit. */
     JJ_SENSOR_SHORT,       /**< The sensor circuit is electrically consistent with a short circuit. */
     JJ_SENSOR_IMPLAUSIBLE, /**< Conversion is non-finite or outside the configured physically credible range. */
 } jj_sensor_status_t;
+
+typedef enum {
+    JJ_FAN_PROOF_UNAVAILABLE = 0, /**< No proof mechanism/sample is currently authoritative. */
+    JJ_FAN_PROOF_PENDING,         /**< Fans are commanded; proof is still within its allowed startup interval. */
+    JJ_FAN_PROOF_PROVEN,          /**< Required airflow has been established. */
+    JJ_FAN_PROOF_FAILED,          /**< The product-level proof deadline or explicit failure condition was reached. */
+} jj_fan_proof_t;
 
 typedef enum {
     JJ_FAULT_NONE = 0,          /**< No safety fault is latched. */
@@ -36,6 +43,7 @@ typedef enum {
     JJ_BLOCK_PRINTER_STALE,        /**< AUTO heating is blocked because printer data is missing or too old. */
     JJ_BLOCK_PRINTER_STOPPED,      /**< AUTO heating is blocked because the printer is not printing. */
     JJ_BLOCK_BED_TARGET_LOW,       /**< AUTO heating is blocked because the bed target is below policy. */
+    JJ_BLOCK_FAN_PROOF_PENDING,    /**< Heating awaits authoritative fan/airflow proof. */
     JJ_BLOCK_INVALID_MODE,         /**< Heating is blocked because the requested mode is not recognized. */
 } jj_block_reason_t;
 
@@ -48,6 +56,8 @@ typedef struct {
 } jj_printer_sample_t;
 typedef struct {
     float maximum_target_c;
+    float chamber_hard_limit_c;
+    float outlet_hard_limit_c;
     float case_hard_limit_c;
     float cooldown_release_c;
     float auto_bed_threshold_c;
@@ -62,7 +72,7 @@ typedef struct {
     jj_sensor_sample_t outlet;
     jj_sensor_sample_t case_sensor;
     jj_printer_sample_t printer;
-    bool fan_proven;
+    jj_fan_proof_t fan_proof;
 } jj_inputs_t;
 typedef struct {
     bool heater_requested;
@@ -78,6 +88,7 @@ typedef struct {
 } jj_interlock_t;
 
 jj_interlock_config_t jj_interlock_default_config(void);
+jj_inputs_t jj_inputs_safe_defaults(void);
 void jj_interlock_init(jj_interlock_t *state, const jj_interlock_config_t *config);
 jj_outputs_t jj_interlock_step(jj_interlock_t *state, const jj_inputs_t *input);
 bool jj_interlock_clear_fault(jj_interlock_t *state, const jj_inputs_t *input);

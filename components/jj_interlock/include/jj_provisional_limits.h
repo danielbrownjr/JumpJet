@@ -5,6 +5,8 @@
 // verified product limits. They may only be finalized after the thermal ordering
 // and margins are supported by hardware measurements and component/material data.
 #define JJ_PROVISIONAL_MAXIMUM_TARGET_C       60.0f
+#define JJ_PROVISIONAL_CHAMBER_HARD_LIMIT_C   72.0f
+#define JJ_PROVISIONAL_OUTLET_HARD_LIMIT_C    72.0f
 #define JJ_PROVISIONAL_CASE_HARD_LIMIT_C      72.0f
 #define JJ_PROVISIONAL_COOLDOWN_RELEASE_C     40.0f
 #define JJ_PROVISIONAL_AUTO_BED_THRESHOLD_C   80.0f

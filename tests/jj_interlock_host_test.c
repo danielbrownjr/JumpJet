@@ -16,8 +16,38 @@ static jj_inputs_t nominal(void)
         .case_sensor = {.status = JJ_SENSOR_OK, .temperature_c = 36.0f},
         .printer = {.online = true, .printing = true, .bed_target_c = 100.0f,
                     .sample_age_ms = 0},
-        .fan_proven = true,
+        .fan_proof = JJ_FAN_PROOF_PROVEN,
     };
+}
+
+static jj_sensor_sample_t *sensor_at(jj_inputs_t *input, size_t sensor);
+
+static void test_zero_and_named_defaults_fail_cold(void)
+{
+    CHECK(JJ_SENSOR_UNAVAILABLE == 0);
+    CHECK(JJ_SENSOR_OK != 0);
+
+    jj_interlock_t state;
+    jj_interlock_init(&state, NULL);
+    jj_inputs_t zero = {0};
+    jj_outputs_t output = jj_interlock_step(&state, &zero);
+    CHECK(!output.heater_requested);
+    CHECK(output.fan_percent == 100);
+    CHECK(output.effective_target_c == 0.0f);
+    CHECK(output.fault == JJ_FAULT_NONE);
+    CHECK(output.block_reason == JJ_BLOCK_NOT_COMMISSIONED);
+
+    jj_inputs_t safe = jj_inputs_safe_defaults();
+    CHECK(!safe.commissioned);
+    CHECK(safe.mode == JJ_MODE_OFF);
+    CHECK(safe.requested_target_c == 0.0f);
+    CHECK(safe.chamber.status == JJ_SENSOR_UNAVAILABLE);
+    CHECK(safe.outlet.status == JJ_SENSOR_UNAVAILABLE);
+    CHECK(safe.case_sensor.status == JJ_SENSOR_UNAVAILABLE);
+    CHECK(!safe.printer.online);
+    CHECK(!safe.printer.printing);
+    CHECK(safe.printer.sample_age_ms == UINT32_MAX);
+    CHECK(safe.fan_proof == JJ_FAN_PROOF_UNAVAILABLE);
 }
 
 static void test_uncommissioned_is_cold(void)
@@ -77,12 +107,21 @@ static void test_sensor_fault_latches_and_requires_safe_clear(void)
 
 static void test_overtemperature_forces_heat_off_and_cooldown(void)
 {
-    jj_interlock_t state; jj_interlock_init(&state, NULL);
-    jj_inputs_t input = nominal(); input.case_sensor.temperature_c = 72.0f;
-    jj_outputs_t output = jj_interlock_step(&state, &input);
-    CHECK(!output.heater_requested);
-    CHECK(output.fault == JJ_FAULT_OVERTEMPERATURE);
-    CHECK(output.fan_percent == 100);
+    const jj_interlock_config_t config = jj_interlock_default_config();
+    for (size_t sensor = 0; sensor < 3; ++sensor) {
+        jj_interlock_t state; jj_interlock_init(&state, &config);
+        jj_inputs_t input = nominal();
+        jj_sensor_sample_t *sample = sensor_at(&input, sensor);
+        sample->temperature_c = sensor == 0 ? config.chamber_hard_limit_c :
+                                sensor == 1 ? config.outlet_hard_limit_c :
+                                              config.case_hard_limit_c;
+        jj_outputs_t output = jj_interlock_step(&state, &input);
+        CHECK(!output.heater_requested);
+        CHECK(output.effective_target_c == 0.0f);
+        CHECK(output.fault == JJ_FAULT_OVERTEMPERATURE);
+        CHECK(output.block_reason == JJ_BLOCK_FAULT_LATCHED);
+        CHECK(output.fan_percent == 100);
+    }
 }
 
 static jj_outputs_t step_once(jj_interlock_config_t config, jj_inputs_t input)
@@ -95,6 +134,7 @@ static jj_outputs_t step_once(jj_interlock_config_t config, jj_inputs_t input)
 static void check_cold(jj_outputs_t output, jj_block_reason_t reason)
 {
     CHECK(!output.heater_requested);
+    CHECK(output.effective_target_c == 0.0f);
     CHECK(output.block_reason == reason);
 }
 
@@ -109,6 +149,8 @@ static void test_named_provisional_defaults_and_invalid_config(void)
 {
     jj_interlock_config_t config = jj_interlock_default_config();
     CHECK(config.maximum_target_c == JJ_PROVISIONAL_MAXIMUM_TARGET_C);
+    CHECK(config.chamber_hard_limit_c == JJ_PROVISIONAL_CHAMBER_HARD_LIMIT_C);
+    CHECK(config.outlet_hard_limit_c == JJ_PROVISIONAL_OUTLET_HARD_LIMIT_C);
     CHECK(config.case_hard_limit_c == JJ_PROVISIONAL_CASE_HARD_LIMIT_C);
     CHECK(config.cooldown_release_c == JJ_PROVISIONAL_COOLDOWN_RELEASE_C);
     CHECK(config.auto_bed_threshold_c == JJ_PROVISIONAL_AUTO_BED_THRESHOLD_C);
@@ -120,6 +162,20 @@ static void test_named_provisional_defaults_and_invalid_config(void)
     config.maximum_target_c = 0.0f; expect_config_fault(config);
     config = jj_interlock_default_config();
     config.maximum_target_c = JJ_PROVISIONAL_MAXIMUM_TARGET_C + 0.1f;
+    expect_config_fault(config);
+    config = jj_interlock_default_config();
+    config.chamber_hard_limit_c = NAN; expect_config_fault(config);
+    config = jj_interlock_default_config();
+    config.chamber_hard_limit_c = config.maximum_target_c; expect_config_fault(config);
+    config = jj_interlock_default_config();
+    config.chamber_hard_limit_c = JJ_PROVISIONAL_CHAMBER_HARD_LIMIT_C + 0.1f;
+    expect_config_fault(config);
+    config = jj_interlock_default_config();
+    config.outlet_hard_limit_c = INFINITY; expect_config_fault(config);
+    config = jj_interlock_default_config();
+    config.outlet_hard_limit_c = config.maximum_target_c; expect_config_fault(config);
+    config = jj_interlock_default_config();
+    config.outlet_hard_limit_c = JJ_PROVISIONAL_OUTLET_HARD_LIMIT_C + 0.1f;
     expect_config_fault(config);
     config = jj_interlock_default_config();
     config.case_hard_limit_c = INFINITY; expect_config_fault(config);
@@ -160,6 +216,8 @@ static void test_null_mode_and_target_fail_cold_boundaries(void)
     jj_inputs_t input = nominal();
     check_cold(jj_interlock_step(NULL, &input), JJ_BLOCK_FAULT_LATCHED);
     check_cold(jj_interlock_step(&state, NULL), JJ_BLOCK_FAULT_LATCHED);
+    CHECK(jj_interlock_step(NULL, &input).fan_percent == 100);
+    CHECK(jj_interlock_step(&state, NULL).fault == JJ_FAULT_SENSOR);
 
     input.mode = JJ_MODE_OFF;
     check_cold(step_once(jj_interlock_default_config(), input), JJ_BLOCK_OFF);
@@ -235,19 +293,86 @@ static void test_all_sensor_invalid_and_fan_fault_inputs(void)
             jj_outputs_t output = step_once(jj_interlock_default_config(), input);
             check_cold(output, JJ_BLOCK_FAULT_LATCHED);
             CHECK(output.fault == JJ_FAULT_SENSOR);
+            CHECK(output.fan_percent == 100);
         }
         jj_inputs_t input = nominal();
         sensor_at(&input, sensor)->temperature_c = NAN;
-        CHECK(step_once(jj_interlock_default_config(), input).fault == JJ_FAULT_SENSOR);
+        jj_outputs_t output = step_once(jj_interlock_default_config(), input);
+        CHECK(output.fault == JJ_FAULT_SENSOR);
+        CHECK(output.fan_percent == 100);
         input = nominal();
         sensor_at(&input, sensor)->temperature_c = INFINITY;
-        CHECK(step_once(jj_interlock_default_config(), input).fault == JJ_FAULT_SENSOR);
+        output = step_once(jj_interlock_default_config(), input);
+        CHECK(output.fault == JJ_FAULT_SENSOR);
+        CHECK(output.fan_percent == 100);
     }
 
-    jj_inputs_t input = nominal(); input.fan_proven = false;
+    jj_inputs_t input = nominal(); input.fan_proof = JJ_FAN_PROOF_UNAVAILABLE;
     jj_outputs_t output = step_once(jj_interlock_default_config(), input);
+    check_cold(output, JJ_BLOCK_FAN_PROOF_PENDING);
+    CHECK(output.fault == JJ_FAULT_NONE);
+    CHECK(output.fan_percent == 100);
+    input.fan_proof = JJ_FAN_PROOF_PENDING;
+    output = step_once(jj_interlock_default_config(), input);
+    check_cold(output, JJ_BLOCK_FAN_PROOF_PENDING);
+    CHECK(output.fault == JJ_FAULT_NONE);
+    CHECK(output.fan_percent == 100);
+    input.fan_proof = JJ_FAN_PROOF_FAILED;
+    output = step_once(jj_interlock_default_config(), input);
     check_cold(output, JJ_BLOCK_FAULT_LATCHED);
     CHECK(output.fault == JJ_FAULT_FAN);
+    CHECK(output.fan_percent == 100);
+    input.fan_proof = (jj_fan_proof_t)99;
+    output = step_once(jj_interlock_default_config(), input);
+    check_cold(output, JJ_BLOCK_FAULT_LATCHED);
+    CHECK(output.fault == JJ_FAULT_FAN);
+    CHECK(output.fan_percent == 100);
+}
+
+static void test_blocked_cooling_policy(void)
+{
+    const jj_interlock_config_t config = jj_interlock_default_config();
+    jj_inputs_t input = nominal();
+    input.mode = JJ_MODE_OFF;
+    jj_outputs_t output = step_once(config, input);
+    check_cold(output, JJ_BLOCK_OFF);
+    CHECK(output.fault == JJ_FAULT_NONE);
+    CHECK(output.fan_percent == 0);
+
+    for (size_t sensor = 0; sensor < 3; ++sensor) {
+        input = nominal();
+        input.mode = JJ_MODE_OFF;
+        sensor_at(&input, sensor)->temperature_c = config.cooldown_release_c + 0.1f;
+        output = step_once(config, input);
+        check_cold(output, JJ_BLOCK_OFF);
+        CHECK(output.fault == JJ_FAULT_NONE);
+        CHECK(output.fan_percent == 100);
+    }
+
+    input = nominal();
+    input.chamber.status = JJ_SENSOR_OPEN;
+    input.outlet.temperature_c = config.cooldown_release_c + 5.0f;
+    output = step_once(config, input);
+    check_cold(output, JJ_BLOCK_FAULT_LATCHED);
+    CHECK(output.fault == JJ_FAULT_SENSOR);
+    CHECK(output.fan_percent == 100);
+
+    input = nominal();
+    input.chamber.status = JJ_SENSOR_OPEN;
+    input.outlet.temperature_c = config.outlet_hard_limit_c;
+    output = step_once(config, input);
+    check_cold(output, JJ_BLOCK_FAULT_LATCHED);
+    CHECK(output.fault == JJ_FAULT_OVERTEMPERATURE);
+    CHECK(output.fan_percent == 100);
+
+    input = jj_inputs_safe_defaults();
+    input.commissioned = true;
+    input.mode = JJ_MODE_MANUAL;
+    input.requested_target_c = 40.0f;
+    output = step_once(config, input);
+    check_cold(output, JJ_BLOCK_FAULT_LATCHED);
+    CHECK(output.fault == JJ_FAULT_SENSOR);
+    CHECK(output.fan_percent == 100);
 }
 
 static void test_temperature_and_fault_clear_boundaries(void)
@@ -296,6 +421,7 @@ static void test_temperature_and_fault_clear_boundaries(void)
 
 int main(void)
 {
+    test_zero_and_named_defaults_fail_cold();
     test_uncommissioned_is_cold();
     test_auto_happy_path_and_clamp();
     test_auto_fails_cold_on_printer_conditions();
@@ -305,6 +431,7 @@ int main(void)
     test_null_mode_and_target_fail_cold_boundaries();
     test_auto_printer_boundaries_and_unknown_age();
     test_all_sensor_invalid_and_fan_fault_inputs();
+    test_blocked_cooling_policy();
     test_temperature_and_fault_clear_boundaries();
     puts("jj_interlock_host_test: PASS");
     return 0;

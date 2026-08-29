@@ -43,8 +43,9 @@ The current milestone is deliberately **cold-safe**:
   read-only `dc_prusa` integration
 - Jump Jet identity and truthful, read-only API v2 status
 - pure-C interlock model with host tests for stale/offline/stopped printer state,
-  low bed target, invalid policy/configuration, sensor and fan faults,
-  overtemperature, cooldown, and safe fault clearing
+  low bed target, invalid policy/configuration, zero/unavailable inputs,
+  conservative uncertain-sensor cooling, pending/failed fan proof,
+  sensor-specific provisional overtemperature paths, and safe fault clearing
 - OTA rejection before upload while heating, a second check before boot selection,
   and strict `jumpjet` image identity validation
 - CI gates for the host interlock suite, static analysis, and an ESP-IDF 5.3

@@ -28,6 +28,9 @@ implementation starts, and keep only the summary checkbox here.
 - [ ] Define printer states that count as actively printing for CORE One Buddy firmware
 - [ ] Add configuration validation tests for PrusaLink host, port, and secret retention
 - [x] Add host tests for exact stale boundaries, unavailable sample age, invalid targets, and fault-clear temperature boundaries
+- [x] Make zero-initialized interlock inputs non-authoritative and provide named cold-safe defaults
+- [x] Distinguish fan-proof pending from an explicit proof failure in the abstract interlock
+- [ ] Replace all three provisional 72 C chamber/outlet/case trip ceilings with characterized, sensor-specific release limits before heater actuation
 - [ ] Add API contract tests for truthful capabilities and cold-safe state
 
 ## Electrical and safety analysis
@@ -48,9 +51,11 @@ implementation starts, and keep only the summary checkbox here.
 - [ ] Implement `jj_board` with safe-at-reset GPIO initialization
 - [ ] Implement ADC sampling, calibration, filtering, and explicit sensor status
 - [ ] Implement two fan channels and available fan/airflow proof
+- [ ] Define the bounded fan spin-up/proof timeout and the evidence that changes proof from pending to proven or failed
 - [ ] Implement physical-switch handling and debouncing
 - [ ] Implement bounded settings persistence with corrupt-NVS recovery
 - [ ] Implement the heater actuator behind one interlock-controlled interface
+- [ ] Verify the chamber, outlet, and case hard-trip ordering against measured normal temperatures, material limits, and the independent cutoff
 - [ ] Implement PWM/PID with output clamp, anti-windup, and bumpless stop/restart behavior
 - [ ] Implement and persist latched safety faults
 - [ ] Implement failure-to-heat and uncontrolled-rise detection from measured thermal behavior
