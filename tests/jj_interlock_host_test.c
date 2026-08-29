@@ -131,11 +131,15 @@ static void test_named_provisional_defaults_and_invalid_config(void)
     config = jj_interlock_default_config();
     config.cooldown_release_c = -0.1f; expect_config_fault(config);
     config = jj_interlock_default_config();
+    config.cooldown_release_c = NAN; expect_config_fault(config);
+    config = jj_interlock_default_config();
     config.cooldown_release_c = config.maximum_target_c; expect_config_fault(config);
     config = jj_interlock_default_config();
     config.auto_bed_threshold_c = NAN; expect_config_fault(config);
     config = jj_interlock_default_config();
     config.auto_bed_threshold_c = 0.0f; expect_config_fault(config);
+    config = jj_interlock_default_config();
+    config.auto_chamber_target_c = NAN; expect_config_fault(config);
     config = jj_interlock_default_config();
     config.auto_chamber_target_c = -1.0f; expect_config_fault(config);
     config = jj_interlock_default_config();
@@ -163,6 +167,8 @@ static void test_null_mode_and_target_fail_cold_boundaries(void)
     input.requested_target_c = 0.0f;
     check_cold(step_once(jj_interlock_default_config(), input), JJ_BLOCK_OFF);
     input.requested_target_c = NAN;
+    check_cold(step_once(jj_interlock_default_config(), input), JJ_BLOCK_OFF);
+    input.requested_target_c = INFINITY;
     check_cold(step_once(jj_interlock_default_config(), input), JJ_BLOCK_OFF);
     input.requested_target_c = JJ_PROVISIONAL_MAXIMUM_TARGET_C - 0.1f;
     CHECK(step_once(jj_interlock_default_config(), input).effective_target_c ==
@@ -260,6 +266,12 @@ static void test_temperature_and_fault_clear_boundaries(void)
     CHECK(!jj_interlock_clear_fault(NULL, &input));
     CHECK(!jj_interlock_clear_fault(&state, NULL));
     CHECK(!jj_interlock_clear_fault(&state, &input));
+    jj_interlock_config_t invalid_config = config;
+    invalid_config.maximum_target_c = JJ_PROVISIONAL_MAXIMUM_TARGET_C + 0.1f;
+    jj_interlock_t invalid_state;
+    jj_interlock_init(&invalid_state, &invalid_config);
+    jj_inputs_t off_input = nominal(); off_input.mode = JJ_MODE_OFF;
+    CHECK(!jj_interlock_clear_fault(&invalid_state, &off_input));
     input.mode = JJ_MODE_OFF; input.outlet.status = JJ_SENSOR_OPEN;
     CHECK(!jj_interlock_clear_fault(&state, &input));
     input = nominal(); input.mode = JJ_MODE_OFF;
