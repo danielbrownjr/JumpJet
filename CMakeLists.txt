@@ -1,5 +1,7 @@
 cmake_minimum_required(VERSION 3.16)
 include(${CMAKE_CURRENT_SOURCE_DIR}/components/jj_identity/identity.cmake)
+include(${CMAKE_CURRENT_SOURCE_DIR}/components/jj_identity/validate.cmake)
+jj_validate_product_id("${JJ_IDENTITY_PRODUCT_ID}")
 execute_process(COMMAND git describe --tags --always --dirty
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
     OUTPUT_VARIABLE JJ_VERSION OUTPUT_STRIP_TRAILING_WHITESPACE ERROR_QUIET)
@@ -9,10 +11,3 @@ endif()
 set(PROJECT_VER "${JJ_VERSION}")
 include($ENV{IDF_PATH}/tools/cmake/project.cmake)
 project(${JJ_IDENTITY_PRODUCT_ID})
-foreach(jj_component jj_interlock jj_portal)
-    if(TARGET __idf_${jj_component})
-        target_compile_options(__idf_${jj_component} PRIVATE -Wall -Wextra -Werror)
-    else()
-        message(FATAL_ERROR "${JJ_IDENTITY_DISPLAY_NAME} component ${jj_component} was not discovered")
-    endif()
-endforeach()

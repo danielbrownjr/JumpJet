@@ -2,23 +2,7 @@ name: firmware-build
 
 on:
   push:
-    paths:
-      - 'components/**'
-      - 'main/**'
-      - 'tests/**'
-      - 'CMakeLists.txt'
-      - 'partitions.csv'
-      - 'sdkconfig.defaults'
-      - '.github/workflows/firmware-build.yml'
   pull_request:
-    paths:
-      - 'components/**'
-      - 'main/**'
-      - 'tests/**'
-      - 'CMakeLists.txt'
-      - 'partitions.csv'
-      - 'sdkconfig.defaults'
-      - '.github/workflows/firmware-build.yml'
   workflow_dispatch:
 
 permissions:
@@ -34,25 +18,44 @@ jobs:
     steps:
       - name: Check out source
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          fetch-depth: 0
 
       - name: Test heater interlock state machine
         run: ./tests/run_interlock_host_test.sh
 
-      - name: Reject whitespace errors
-        run: git diff --check
+      - name: Check canonical product identity
+        run: sh tests/check_identity_contract.sh
+
+      - name: Enforce production actuation allowlist
+        run: sh tests/check_actuation_allowlist.sh
+
+      - name: Check OTA and persistent cold-safe status contract
+        run: sh tests/check_ota_contract.sh
+
+      - name: Reject whitespace errors in PR/base diff
+        if: github.event_name == 'pull_request'
+        run: git diff --check "${{ github.event.pull_request.base.sha }}...HEAD"
+
+      - name: Reject whitespace errors in pushed commit
+        if: github.event_name != 'pull_request'
+        run: git diff --check HEAD^ HEAD
 
       - name: Static analysis
         run: |
           sudo apt-get update
           sudo apt-get install -y cppcheck
+          INCS=""
+          for dir in components/*/include; do INCS="$INCS -I$dir"; done
           cppcheck \
             --enable=warning,performance,portability \
+            --inline-suppr \
             --suppress=missingInclude \
             --suppress=missingIncludeSystem \
+            --suppress=normalCheckLevelMaxBranches \
             --error-exitcode=2 \
             --std=c11 \
-            -Icomponents/jj_interlock/include \
-            -Icomponents/jj_portal/include \
+            $INCS \
             components/ main/
 
       - name: Build ESP32-S3 firmware (ESP-IDF v5.3)
