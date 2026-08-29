@@ -24,6 +24,7 @@ typedef enum {
     JJ_FAULT_FAN,               /**< Required airflow could not be proven while heating was requested. */
     JJ_FAULT_NO_HEAT,           /**< Temperature failed to rise as expected while heating was requested. */
     JJ_FAULT_UNCONTROLLED_RISE, /**< Temperature rose abnormally while heater output was not requested. */
+    JJ_FAULT_CONFIG,            /**< Safety or policy configuration is invalid; heating is denied. */
 } jj_fault_t;
 
 typedef enum {
@@ -35,6 +36,7 @@ typedef enum {
     JJ_BLOCK_PRINTER_STALE,        /**< AUTO heating is blocked because printer data is missing or too old. */
     JJ_BLOCK_PRINTER_STOPPED,      /**< AUTO heating is blocked because the printer is not printing. */
     JJ_BLOCK_BED_TARGET_LOW,       /**< AUTO heating is blocked because the bed target is below policy. */
+    JJ_BLOCK_INVALID_MODE,         /**< Heating is blocked because the requested mode is not recognized. */
 } jj_block_reason_t;
 
 typedef struct { jj_sensor_status_t status; float temperature_c; } jj_sensor_sample_t;
