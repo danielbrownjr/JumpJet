@@ -133,11 +133,15 @@ static void test_named_provisional_defaults_and_invalid_config(void)
     config = jj_interlock_default_config();
     config.cooldown_release_c = NAN; expect_config_fault(config);
     config = jj_interlock_default_config();
+    config.cooldown_release_c = JJ_PROVISIONAL_COOLDOWN_RELEASE_C + 0.1f;
+    expect_config_fault(config);
+    config = jj_interlock_default_config();
     config.cooldown_release_c = config.maximum_target_c; expect_config_fault(config);
     config = jj_interlock_default_config();
     config.auto_bed_threshold_c = NAN; expect_config_fault(config);
     config = jj_interlock_default_config();
-    config.auto_bed_threshold_c = 0.0f; expect_config_fault(config);
+    config.auto_bed_threshold_c = JJ_PROVISIONAL_AUTO_BED_THRESHOLD_C - 0.1f;
+    expect_config_fault(config);
     config = jj_interlock_default_config();
     config.auto_chamber_target_c = NAN; expect_config_fault(config);
     config = jj_interlock_default_config();

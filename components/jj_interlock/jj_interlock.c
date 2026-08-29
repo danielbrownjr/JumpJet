@@ -38,8 +38,9 @@ static bool config_valid(const jj_interlock_config_t *config)
            config->case_hard_limit_c > config->maximum_target_c &&
            config->case_hard_limit_c <= JJ_PROVISIONAL_CASE_HARD_LIMIT_C &&
            config->cooldown_release_c >= 0.0f &&
+           config->cooldown_release_c <= JJ_PROVISIONAL_COOLDOWN_RELEASE_C &&
            config->cooldown_release_c < config->maximum_target_c &&
-           config->auto_bed_threshold_c > 0.0f &&
+           config->auto_bed_threshold_c >= JJ_PROVISIONAL_AUTO_BED_THRESHOLD_C &&
            config->auto_chamber_target_c > 0.0f &&
            config->printer_stale_ms > 0 &&
            config->printer_stale_ms <= JJ_PROVISIONAL_PRINTER_STALE_MS;
