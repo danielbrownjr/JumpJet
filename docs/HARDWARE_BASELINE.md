@@ -14,6 +14,19 @@ BOM, and mechanical airflow path are reviewed.
 Consequently, the foundation firmware advertises no heating capability and
 contains no heater GPIO/PWM driver.
 
+The values in `jj_provisional_limits.h` are mechanically named Phase-0/Phase-1
+placeholders. They are not material-derived or thermally characterized limits.
+The interlock rejects configuration that raises the compiled target, hard-trip,
+or printer-staleness ceilings, but those ceilings still require Phase 1 evidence
+before they can be treated as release limits.
+
+The required thermal ordering is:
+
+`normal operating ceiling < firmware hard trip < independent hardware cutoff < lowest applicable material/component limit`
+
+The numerical margins remain deliberately unspecified until measurements,
+component ratings, and material data exist.
+
 The build currently uses a provisional 4 MiB dual-OTA partition layout because
 that is the conservative ESP32-S3 Super Mini baseline. The exact module/flash
 population on the Jump Jet PCB must be confirmed before this becomes a release

@@ -1,7 +1,7 @@
 # Jetpack to Jump Jet migration
 
-The original Arduino sketch remains in `esp32_chamber_heater_with_prusalink/` as
-upstream historical reference.
+The original Arduino sketch is isolated in `legacy/jetpack-arduino/` as
+unmaintained upstream historical reference. It is not production Jump Jet code.
 
 | Upstream Jetpack behavior | Jump Jet direction |
 |---|---|

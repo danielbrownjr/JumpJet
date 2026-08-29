@@ -20,8 +20,10 @@ Philip created the original mechanical concept, Arduino firmware, PrusaLink
 automation, PID approach, and three-sensor safety concept on which this project
 started. Thank you, Philip, for publishing the work under GPL-3.0.
 
-This fork keeps the original Git history, GPL-3.0 license, and Arduino sketch.
-Jump Jet is a substantially new ESP-IDF/Dragon-family implementation and should
+This fork keeps the original Git history and GPL-3.0 license. The upstream
+Arduino sketch is isolated under `legacy/jetpack-arduino/` as unmaintained
+historical reference, not production firmware. Jump Jet is a substantially new
+ESP-IDF/Dragon-family implementation and should
 not be represented as Philip's work or as endorsed by him. See
 [UPSTREAM.md](UPSTREAM.md) for exact provenance and retained upstream material.
 
@@ -41,7 +43,8 @@ The current milestone is deliberately **cold-safe**:
   read-only `dc_prusa` integration
 - Jump Jet identity and truthful, read-only API v2 status
 - pure-C interlock model with host tests for stale/offline/stopped printer state,
-  low bed target, sensor faults, overtemperature, cooldown, and safe fault clearing
+  low bed target, invalid policy/configuration, sensor and fan faults,
+  overtemperature, cooldown, and safe fault clearing
 - OTA rejection before upload while heating, a second check before boot selection,
   and strict `jumpjet` image identity validation
 - CI gates for the host interlock suite, static analysis, and an ESP-IDF 5.3
@@ -92,13 +95,14 @@ ESP-IDF 5.3 or newer with ESP32-S3 tools is required:
 
 - [Firmware architecture](docs/ARCHITECTURE.md)
 - [Uncommissioned hardware baseline](docs/HARDWARE_BASELINE.md)
+- [Safety verification evidence](docs/SAFETY_VERIFICATION.md)
 - [Jetpack-to-Jump-Jet migration map](docs/MIGRATION.md)
 - [Upstream attribution and provenance](UPSTREAM.md)
 
 ## Contributors and sponsorship
 
-- [Dan](https://github.com/danielbrownjr)
-- [Mauker](https://github.com/Mauker1)
+- [Dan](https://github.com/danielbrownjr) — project, firmware, and hardware
+- [Mauker](https://github.com/Mauker1) — project and mechanical design
 - Original Jetpack project: [Philip Sørensen](https://github.com/philip-soerensen)
 - PCB fabrication sponsored by [PCBWay](https://www.pcbway.com/)
 

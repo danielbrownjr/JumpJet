@@ -42,5 +42,5 @@ not expose it.
 PrusaLink status parse and set to `UINT32_MAX` when no complete sample is available.
 Jump Jet passes that age directly into its product-owned interlock. The interlock
 fails AUTO cold when the age exceeds 12 seconds, which is intentionally stricter
-than dc_prusa's 15-second transport-level expiration backstop. The change is pinned
-from Dan's fork while upstream `dragon-core` PR #51 is under review.
+than dc_prusa's 15-second transport-level expiration backstop. The merged change
+is pinned from upstream `dragon-core` commit `deeda5e`.

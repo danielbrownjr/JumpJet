@@ -27,7 +27,7 @@ implementation starts, and keep only the summary checkbox here.
 - [ ] Replace provisional AUTO thresholds with named, validated settings; keep heat disabled
 - [ ] Define printer states that count as actively printing for CORE One Buddy firmware
 - [ ] Add configuration validation tests for PrusaLink host, port, and secret retention
-- [ ] Add host tests for exact stale boundaries, unavailable sample age, invalid targets, and fault-clear temperature boundaries
+- [x] Add host tests for exact stale boundaries, unavailable sample age, invalid targets, and fault-clear temperature boundaries
 - [ ] Add API contract tests for truthful capabilities and cold-safe state
 
 ## Electrical and safety analysis
@@ -40,6 +40,7 @@ implementation starts, and keep only the summary checkbox here.
 - [ ] Calculate trace/via current capacity and expected copper temperature rise
 - [ ] Calculate thermistor-divider voltage and ADC counts over open, short, and operating range
 - [ ] Define independent thermal-cutoff trip temperature from measured enclosure hot spots
+- [ ] Establish measured margins for: normal operating ceiling < firmware hard trip < independent hardware cutoff < lowest applicable material/component limit
 - [ ] Produce a hazard/FMEA table with detection, response, latch behavior, and independent mitigation
 
 ## Firmware — after hardware review
