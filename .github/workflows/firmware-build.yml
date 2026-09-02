@@ -1,0 +1,72 @@
+name: firmware-build
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test-and-build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+
+      - name: Install validation tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y cppcheck ripgrep
+
+      - name: Test heater interlock state machine
+        run: ./tests/run_interlock_host_test.sh
+
+      - name: Check canonical product identity
+        run: sh tests/check_identity_contract.sh
+
+      - name: Check API and product contract
+        run: sh tests/check_api_contract.sh
+
+      - name: Enforce production actuation allowlist
+        run: sh tests/check_actuation_allowlist.sh
+
+      - name: Check OTA and persistent cold-safe status contract
+        run: sh tests/check_ota_contract.sh
+
+      - name: Reject whitespace errors in PR/base diff
+        if: github.event_name == 'pull_request'
+        run: git diff --check "${{ github.event.pull_request.base.sha }}...HEAD"
+
+      - name: Reject whitespace errors in pushed commit
+        if: github.event_name != 'pull_request'
+        run: git diff --check HEAD^ HEAD
+
+      - name: Static analysis
+        run: |
+          INCS=""
+          for dir in components/*/include; do INCS="$INCS -I$dir"; done
+          cppcheck \
+            --enable=warning,performance,portability \
+            --inline-suppr \
+            --suppress=missingInclude \
+            --suppress=missingIncludeSystem \
+            --suppress=normalCheckLevelMaxBranches \
+            --error-exitcode=2 \
+            --std=c11 \
+            $INCS \
+            components/ main/
+
+      - name: Build ESP32-S3 firmware (ESP-IDF v5.3)
+        uses: espressif/esp-idf-ci-action@9d38657f3d789ca759b2b37aaf5ceffbc42c4f0d # v1
+        with:
+          esp_idf_version: v5.3
+          target: esp32s3
+          path: '.'

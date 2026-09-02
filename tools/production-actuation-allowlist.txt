@@ -1,0 +1,6 @@
+# Exact repository-relative production files allowed to call low-level output
+# actuation primitives. Phase 0 intentionally has no entries.
+#
+# Future hardware work must add the smallest driver boundary needed here. Heater
+# power must remain confined to one explicitly reviewed heater-actuator file;
+# do not allowlist controllers, policy, portal, or main application code.
