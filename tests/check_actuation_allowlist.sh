@@ -32,3 +32,16 @@ if [ "$heater_entries" -gt 1 ]; then
 fi
 
 echo "production actuation allowlist check: PASS"
+
+# Phase-0 compile-out invariant: no production hardware control or placeholder
+# board definition may appear before the hardware contract is reviewed.
+forbidden=$(rg -n --no-heading \
+    '(driver/(gpio|ledc|adc|mcpwm)|GPIO_NUM_[0-9]+|ADC_CHANNEL_[0-9]+|heater[_ ]pin|fan[_ ]pin|thermistor|mosfet)' \
+    "$root/main" "$root/components" -g '*.c' -g '*.h' -g 'CMakeLists.txt' || true)
+if [ -n "$forbidden" ]; then
+    echo "heater-incapable compile-out violation:" >&2
+    printf '%s\n' "$forbidden" >&2
+    exit 1
+fi
+
+echo "GPIO/ADC/thermistor compile-out check: PASS"

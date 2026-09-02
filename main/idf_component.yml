@@ -2,20 +2,20 @@ dependencies:
   dc_evlog:
     git: https://github.com/justinh-rahb/dragon-core.git
     path: components/dc_evlog
-    version: deeda5ef44fb8fbe78f908baab4b62f4486f2f0d
+    version: 4e041d864763d468a50e9649807827dd83dd54bc
   dc_prusa:
     git: https://github.com/justinh-rahb/dragon-core.git
     path: components/dc_prusa
-    version: deeda5ef44fb8fbe78f908baab4b62f4486f2f0d
+    version: 4e041d864763d468a50e9649807827dd83dd54bc
   dc_ui:
     git: https://github.com/justinh-rahb/dragon-core.git
     path: components/dc_ui
-    version: deeda5ef44fb8fbe78f908baab4b62f4486f2f0d
+    version: 4e041d864763d468a50e9649807827dd83dd54bc
   dc_portal:
     git: https://github.com/justinh-rahb/dragon-core.git
     path: components/dc_portal
-    version: deeda5ef44fb8fbe78f908baab4b62f4486f2f0d
+    version: 4e041d864763d468a50e9649807827dd83dd54bc
   dc_wifi:
     git: https://github.com/justinh-rahb/dragon-core.git
     path: components/dc_wifi
-    version: deeda5ef44fb8fbe78f908baab4b62f4486f2f0d
+    version: 4e041d864763d468a50e9649807827dd83dd54bc

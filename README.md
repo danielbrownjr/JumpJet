@@ -6,99 +6,88 @@ family, developed by [Dan](https://github.com/danielbrownjr) and
 of Philip Sørensen's original Jetpack project while retaining its practical,
 printer-integrated form factor.
 
-> **Development status:** cold-safe foundation. The current firmware has no
-> heater GPIO or PWM driver and cannot energize the heater. Do not treat it as
-> installable heater-control firmware yet.
+> **Development status: cold-safe foundation.** The production firmware has no
+> heater or fan GPIO, PWM, ADC, thermistor conversion, or actuator driver. It
+> cannot energize a heater and is not installable heater-control firmware.
 
 ## Project lineage and credit
 
 Jump Jet began as a fork of Philip Sørensen's
-[`esp32-chamber-heater-core-one`](https://github.com/philip-soerensen/esp32-chamber-heater-core-one),
-published with the
-[Jetpack chamber-heater model and build information](https://www.printables.com/model/1696936-jetpack-chamber-heater-for-the-core-one).
+[`esp32-chamber-heater-core-one`](https://github.com/philip-soerensen/esp32-chamber-heater-core-one).
 Philip created the original mechanical concept, Arduino firmware, PrusaLink
-automation, PID approach, and three-sensor safety concept on which this project
-started. Thank you, Philip, for publishing the work under GPL-3.0.
+automation, PID approach, and three-sensor safety concept. The retained history
+and legacy source remain GPL-3.0. See [UPSTREAM.md](UPSTREAM.md) for provenance.
 
-This fork keeps the original Git history and GPL-3.0 license. The upstream
-Arduino sketch is isolated under `legacy/jetpack-arduino/` as unmaintained
-historical reference, not production firmware. Jump Jet is a substantially new
-ESP-IDF/Dragon-family implementation and should
-not be represented as Philip's work or as endorsed by him. See
-[UPSTREAM.md](UPSTREAM.md) for exact provenance and retained upstream material.
-
-The new firmware is a distinct ESP-IDF Dragon-family product. It consumes pinned,
+The new firmware is a distinct ESP-IDF/Dragon-family product. It consumes pinned,
 board-neutral services from [`dragon-core`](https://github.com/justinh-rahb/dragon-core)
-while keeping sensor conversion, GPIOs, heater/fan actuation, PID, product settings,
-API behavior, and all heater safety policy local to Jump Jet.
+while keeping product policy, hardware, control, settings, API behavior, and all
+heater safety decisions local to Jump Jet.
 
-## Current status
-
-The current milestone is deliberately **cold-safe**:
+## Current foundation
 
 - ESP32-S3 ESP-IDF application skeleton
-- selected `dragon-core` components pinned to upstream commit
-  `deeda5ef44fb8fbe78f908baab4b62f4486f2f0d`, which includes merged PrusaLink freshness work from PR #51
-- `dc_wifi`, `dc_portal`, `dc_ui`, `dc_evlog`, and freshness-aware,
-  read-only `dc_prusa` integration
-- Jump Jet identity and truthful, read-only API v2 status
-- pure-C interlock model with host tests for stale/offline/stopped printer state,
-  low bed target, invalid policy/configuration, zero/unavailable inputs,
-  conservative uncertain-sensor cooling, pending/failed fan proof,
-  sensor-specific provisional overtemperature paths, and safe fault clearing
-- OTA rejection before upload while heating, a second check before boot selection,
-  and strict `jumpjet` image identity validation
-- CI gates for the host interlock suite, static analysis, and an ESP-IDF 5.3
-  build targeting the actual ESP32-S3 family
-- **no heater GPIO or PWM implementation** until the PCB and safety chain are reviewed
+- `dc_wifi`, `dc_portal`, `dc_ui`, `dc_evlog`, and read-only `dc_prusa` pinned to
+  dragon-core v0.32.0 (`4e041d864763d468a50e9649807827dd83dd54bc`)
+- exactly three product modes: OFF, MANUAL, and AUTOMATIC; boot/reset is always OFF
+- manual target policy of 30–50 °C inclusive with a 45 °C default and rejection,
+  never clamping, outside that range
+- `dc_prusa`'s existing 15-second freshness result used directly, with no second
+  Jump Jet freshness timer
+- whitelist-only AUTOMATIC eligibility: only exact `PRINTING` is eligible, and
+  production automatic heat remains unavailable until the bed-target mapping is defined
+- truthful read-only API diagnostics and capabilities
+- pre-upload and immediate pre-boot-selection OTA thermal-state guards
+- host tests, API/static contract checks, UBSan, and ESP32-S3 CI build
+- no heater or fan actuation path
+
+The authoritative product and safety behavior is defined in
+[the product/safety contract](docs/PRODUCT_SAFETY_CONTRACT.md).
+
+## Hardware evidence and limits
+
+Standalone [CZ4060 characterization](docs/hardware/cz4060-characterization.md)
+measured about 189 W / 7.89 A sustained at 24 V, no high-current cold inrush,
+about 130 °C at the heater/PTC region, and about 74–75 °C at the chassis. Design
+sizing remains the rated 24 V / 200 W / 8.33 A case.
+
+That test did **not** validate the complete Jump Jet Q1/F2/PCB/connector/wiring
+path or installed operation. The authoritative `.kicad_pcb` is still missing.
+GPIO, ADC, thermistor, protection, and cooldown thresholds therefore remain TBD.
+The Sanyo Denki 9GA0424P3J001 is only a prototype fan candidate, not BOM-final.
 
 ## Safety boundary
 
-Firmware is only one layer of the safety system. Jump Jet also requires correctly
-rated wiring and connectors, input protection and fusing, an independent thermal
-cutoff, a properly derated MOSFET, appropriate PCB copper and clearances, proven
-airflow, temperature-suitable materials, and a physical design that cannot create
-an unsafe hot spot. No software feature may substitute for those protections.
+Firmware is only one layer. A release also requires rated wiring/connectors,
+input protection and fusing, an independent thermal cutoff, a derated MOSFET,
+appropriate PCB copper and clearances, proven airflow, suitable materials, and
+fault-injection evidence. The browser and API are never the safety boundary.
 
-The default state is heater de-energized. Missing or stale printer data, invalid
-sensors, stopped printing, a low bed target, a fault, or an uncommissioned hardware
-configuration must all fail cold. Fans follow a separately defined cooldown/fault
-policy.
-
-## Architecture
-
-Jump Jet is a distinct ESP-IDF product, not DragonBreath with different pins.
-Pinned `dragon-core` components provide board-neutral Wi-Fi, provisioning, UI,
-logging, OTA infrastructure, and read-only PrusaLink status. Jump Jet owns every
-GPIO, sensor, actuator, setting, control loop, API mutation, capability declaration,
-and hardware-specific safety decision.
-
-## Host tests
+## Validation
 
 ```sh
 ./tests/run_interlock_host_test.sh
+sh tests/check_identity_contract.sh
+sh tests/check_api_contract.sh
+sh tests/check_actuation_allowlist.sh
+sh tests/check_ota_contract.sh
 ```
 
-## ESP-IDF build
-
-ESP-IDF 5.3 or newer with ESP32-S3 tools is required:
+For ESP-IDF 5.3 or newer:
 
 ```sh
 ./tools/idf-build.sh . esp32s3
 ```
 
-## Project planning
-
-- [Roadmap](ROADMAP.md) — gated development phases and exit criteria
-- [TODO](TODO.md) — concrete work queue and current blockers
-
 ## Documentation
 
+- [Product and safety contract](docs/PRODUCT_SAFETY_CONTRACT.md)
 - [Firmware architecture](docs/ARCHITECTURE.md)
-- [Uncommissioned hardware baseline](docs/HARDWARE_BASELINE.md)
-- [Safety verification evidence](docs/SAFETY_VERIFICATION.md)
-- [Jetpack-to-Jump-Jet migration map](docs/MIGRATION.md)
-- [Upstream attribution and provenance](UPSTREAM.md)
+- [Hardware baseline](docs/HARDWARE_BASELINE.md)
+- [CZ4060 characterization](docs/hardware/cz4060-characterization.md)
+- [Safety verification](docs/SAFETY_VERIFICATION.md)
+- [Roadmap](ROADMAP.md) and [work queue](TODO.md)
+- [Migration map](docs/MIGRATION.md)
+- [Attribution and provenance](UPSTREAM.md)
 
 ## Contributors and sponsorship
 
@@ -107,8 +96,8 @@ ESP-IDF 5.3 or newer with ESP32-S3 tools is required:
 - Original Jetpack project: [Philip Sørensen](https://github.com/philip-soerensen)
 - PCB fabrication sponsored by [PCBWay](https://www.pcbway.com/)
 
-Jump Jet is an independent community project. It is not affiliated with or
-endorsed by Prusa Research or the original Jetpack author.
+Jump Jet is independent and is not affiliated with or endorsed by Prusa Research
+or the original Jetpack author.
 
 ## License
 

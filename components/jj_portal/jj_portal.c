@@ -54,13 +54,25 @@ static esp_err_t state_get(httpd_req_t *req)
     cJSON *root = cJSON_CreateObject();
     cJSON_AddNumberToObject(root, "api_version", 2);
     cJSON_AddStringToObject(root, "mode", "off");
+    cJSON_AddStringToObject(root, "controller", "disabled");
+    cJSON *control = cJSON_AddObjectToObject(root, "control");
+    cJSON_AddStringToObject(control, "source", "unavailable");
+    cJSON_AddNullToObject(control, "temperature_c");
+    cJSON_AddNumberToObject(root, "target_c", JJ_MANUAL_TARGET_DEFAULT_C);
     cJSON *heater = cJSON_AddObjectToObject(root, "heater");
-    cJSON_AddBoolToObject(heater, "output", false);
-    cJSON_AddNumberToObject(heater, "duty_percent", 0);
-    cJSON_AddNumberToObject(heater, "target_c", 0);
+    cJSON_AddBoolToObject(heater, "requested", false);
+    cJSON_AddBoolToObject(heater, "allowed", false);
+    cJSON_AddBoolToObject(heater, "delivered", false);
+    cJSON_AddNumberToObject(heater, "delivered_percent", 0);
+    cJSON_AddBoolToObject(heater, "available", false);
     cJSON *fan = cJSON_AddObjectToObject(root, "fan");
-    cJSON_AddNumberToObject(fan, "percent", output.fan_percent);
+    cJSON_AddNumberToObject(fan, "requested_percent", output.fan_percent);
+    cJSON_AddNumberToObject(fan, "delivered_percent", 0);
+    cJSON_AddBoolToObject(fan, "available", false);
+    cJSON_AddStringToObject(root, "dominant_constraint",
+                           jj_block_reason_str(output.block_reason));
     cJSON *safety = cJSON_AddObjectToObject(root, "safety");
+    cJSON_AddStringToObject(safety, "health", "degraded");
     cJSON_AddBoolToObject(safety, "commissioned", false);
     cJSON_AddBoolToObject(safety, "fault_latched", output.fault != JJ_FAULT_NONE);
     cJSON_AddStringToObject(safety, "fault", jj_fault_str(output.fault));
@@ -198,11 +210,13 @@ static bool authorize(httpd_req_t *req, void *ctx)
            value[0] != '\0';
 }
 
-static esp_err_t heater_off_guard(char *message, size_t message_size)
+static esp_err_t thermal_state_guard(char *message, size_t message_size)
 {
     const jj_outputs_t output = jj_interlock_snapshot(s_interlock);
-    if (!output.heater_requested) return ESP_OK;
-    snprintf(message, message_size, "Turn the heater off before this operation.");
+    if (!output.heater_requested && !output.thermal_management_required)
+        return ESP_OK;
+    snprintf(message, message_size,
+             "OTA is unavailable while heating or active thermal management is required.");
     return ESP_ERR_INVALID_STATE;
 }
 
@@ -211,7 +225,7 @@ static esp_err_t guard_operation(dc_portal_operation_t operation, void *ctx,
 {
     (void)operation;
     (void)ctx;
-    return heater_off_guard(message, message_size);
+    return thermal_state_guard(message, message_size);
 }
 
 static esp_err_t validate_image(const esp_app_desc_t *image, void *ctx,
@@ -219,7 +233,7 @@ static esp_err_t validate_image(const esp_app_desc_t *image, void *ctx,
 {
     (void)ctx;
     // Independent post-upload recheck immediately before core selects the image.
-    esp_err_t err = heater_off_guard(message, message_size);
+    esp_err_t err = thermal_state_guard(message, message_size);
     if (err != ESP_OK) return err;
     if (strcmp(image->project_name, JJ_IDENTITY_PRODUCT_ID) == 0) return ESP_OK;
     snprintf(message, message_size, "Not a %s firmware image.", JJ_IDENTITY_DISPLAY_NAME);

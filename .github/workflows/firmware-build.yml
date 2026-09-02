@@ -32,6 +32,9 @@ jobs:
       - name: Check canonical product identity
         run: sh tests/check_identity_contract.sh
 
+      - name: Check API and product contract
+        run: sh tests/check_api_contract.sh
+
       - name: Enforce production actuation allowlist
         run: sh tests/check_actuation_allowlist.sh
 

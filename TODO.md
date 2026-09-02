@@ -10,8 +10,9 @@ implementation starts, and keep only the summary checkbox here.
 - [ ] Add the current BOM with manufacturer part numbers and acceptable substitutions
 - [ ] Confirm the exact ESP32-S3 module/dev board and installed flash size
 - [ ] Confirm the complete GPIO/ADC assignment, including boot strapping and USB pins
-- [ ] Record heater resistance or rated power/current at 24 V
-- [ ] Record both fan part numbers, current, connector, PWM method, and tach availability
+- [x] Record standalone CZ4060 rated and measured power/current at 24 V
+- [ ] Validate the full Jump Jet Q1/F2/PCB/connector/wiring path at the 200 W / 8.33 A design basis
+- [ ] Finalize both fan part numbers, current, connector, PWM method, and tach availability (9GA0424P3J001 is prototype-only)
 - [ ] Record every thermistor part number, beta/Steinhart-Hart data, tolerance, and location
 - [ ] Confirm the MOSFET part, gate network, thermal environment, and default-off circuitry
 - [ ] Confirm fuse type/rating, independent thermal-cutoff part/rating, and physical placement
@@ -24,14 +25,16 @@ implementation starts, and keep only the summary checkbox here.
 - [x] Test that only a complete, atomically parsed PrusaLink sample refreshes freshness
 - [x] Submit the freshness API upstream in `dragon-core` PR #51 and pin Jump Jet to its green commit
 - [x] After PR #51 merges, repin Jump Jet to the resulting upstream commit or release tag
-- [ ] Replace provisional AUTO thresholds with named, validated settings; keep heat disabled
-- [ ] Define printer states that count as actively printing for CORE One Buddy firmware
+- [x] Remove provisional AUTO thresholds and keep production AUTOMATIC heat unavailable
+- [x] Allowlist exact `PRINTING`; fail every other known or future state cold
 - [ ] Add configuration validation tests for PrusaLink host, port, and secret retention
-- [x] Add host tests for exact stale boundaries, unavailable sample age, invalid targets, and fault-clear temperature boundaries
+- [x] Use `dc_prusa`'s 15-second freshness result directly; remove the second product timer
+- [x] Add host tests for manual target rejection, AUTOMATIC fail-cold policy, and safe fault clearing
 - [x] Make zero-initialized interlock inputs non-authoritative and provide named cold-safe defaults
 - [x] Distinguish fan-proof pending from an explicit proof failure in the abstract interlock
-- [ ] Replace all three provisional 72 C chamber/outlet/case trip ceilings with characterized, sensor-specific release limits before heater actuation
-- [ ] Add API contract tests for truthful capabilities and cold-safe state
+- [x] Remove uncharacterized numeric trip ceilings from production source
+- [ ] Derive sensor-specific release limits from full-system evidence before heater actuation
+- [x] Add API contract tests for truthful capabilities, semantic ordering, and cold-safe delivery
 
 ## Electrical and safety analysis
 

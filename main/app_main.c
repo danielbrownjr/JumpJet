@@ -31,14 +31,13 @@ static void control_task(void *arg)
     jj_block_reason_t previous = JJ_BLOCK_NONE;
     for (;;) {
         jj_inputs_t input = jj_inputs_safe_defaults();
-        dc_prusa_status_t printer = {.status_age_ms = UINT32_MAX};
+        dc_prusa_status_t printer = {0};
         if (dc_prusa_get_status(&printer) == ESP_OK) {
             input.printer.online = printer.online;
             input.printer.printing = printer_is_printing(printer.printer_state);
             input.printer.bed_target_c = printer.bed_target;
-            // dc_prusa returns UINT32_MAX until a complete status is available.
-            // The product interlock independently applies its stricter 12 s limit.
-            input.printer.sample_age_ms = printer.status_age_ms;
+            // dc_prusa has already applied its authoritative 15-second
+            // freshness rule. Jump Jet deliberately has no second timer.
         }
         const jj_outputs_t output = jj_interlock_step(&s_interlock, &input);
         if (!startup_reported) {
@@ -65,8 +64,7 @@ void app_main(void)
         err = nvs_flash_init();
     }
     ESP_ERROR_CHECK(err);
-    const jj_interlock_config_t config = jj_interlock_default_config();
-    jj_interlock_init(&s_interlock, &config);
+    jj_interlock_init(&s_interlock);
     BaseType_t created = xTaskCreate(control_task, "jj_control", 4096,
                                      xTaskGetCurrentTaskHandle(), 8, NULL);
     ESP_ERROR_CHECK(created == pdPASS ? ESP_OK : ESP_ERR_NO_MEM);

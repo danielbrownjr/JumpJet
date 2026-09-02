@@ -68,10 +68,10 @@ for every implemented fault. No printer installation at this phase.
 
 **Status:** partially scaffolded
 
-- consume trustworthy `dc_prusa` status age; upstream change submitted as
-  `dragon-core` PR #51
-- implement the configurable bed-target-to-chamber-target policy
-- fail AUTO cold on offline, stale, stopped, paused/error, or low-bed-target states
+- consume `dc_prusa`'s 15-second freshness result without a second product timer
+- allowlist exact `PRINTING` and fail all other states cold
+- derive and implement the bed-target-to-chamber-target production policy; keep
+  AUTOMATIC unavailable until then
 - implement validated, revision-aware API mutations and product settings
 - show temperatures, target, duty, fans, mode, PrusaLink state, bed target,
   interlocks, faults, firmware, and network state

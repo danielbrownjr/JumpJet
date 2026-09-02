@@ -1,33 +1,32 @@
-# Hardware baseline — not yet commissioned
+# Hardware baseline — not commissioned
 
-The upstream Jetpack sketch used an ESP32-S3 Super Mini, three analog thermistors,
-GPIO 12 for the fan, and GPIO 13 for the heater module. Those facts describe the
-upstream prototype; they are **not** accepted Jump Jet PCB assignments.
+## Confirmed
 
-Planned Jump Jet hardware currently includes a 24 V heater, two fans, MOSFET
-control, thermistor sensing, a fuse, an independent thermal cutoff, a physical
-switch, and JST-XH signal connections. Component ratings, divider values,
-thermistor curves, GPIOs, current paths, connector loading, copper geometry,
-airflow, and thermal thresholds remain unverified until the current schematic,
-BOM, and mechanical airflow path are reviewed.
+- Intended supply/heater basis: 24 V, CZ4060, rated 200 W / 8.33 A.
+- Standalone characterization sustained about 189 W / 7.89 A with no high-current
+  cold inrush.
+- The standalone heater/PTC region stabilized near 130 °C and its chassis near
+  74–75 °C.
+- Full results: [CZ4060 characterization](hardware/cz4060-characterization.md).
+- The Sanyo Denki 9GA0424P3J001 is a prototype fan candidate, not BOM-final.
 
-Consequently, the foundation firmware advertises no heating capability and
-contains no heater GPIO/PWM driver.
+## Not confirmed
 
-The values in `jj_provisional_limits.h` are mechanically named Phase-0/Phase-1
-placeholders. They are not material-derived or thermally characterized limits.
-The interlock rejects configuration that raises the compiled target, hard-trip,
-or printer-staleness ceilings, but those ceilings still require Phase 1 evidence
-before they can be treated as release limits.
+The authoritative `.kicad_pcb` remains missing. Q1, F2, PCB copper, connectors,
+wiring, installed airflow, the exact ESP32-S3 module, and the complete power path
+have not been validated together. The upstream Jetpack pin assignments are
+historical facts, not Jump Jet assignments.
 
-The required thermal ordering is:
+No GPIO, ADC, divider, thermistor conversion, fan/PWM method, protection threshold,
+thermal trip, cooldown criterion, or recovery threshold may be finalized without
+the corresponding source files and measured evidence.
 
-`normal operating ceiling < firmware hard trip < independent hardware cutoff < lowest applicable material/component limit`
+## Firmware consequence
 
-The numerical margins remain deliberately unspecified until measurements,
-component ratings, and material data exist.
+The foundation advertises no heater/fan capability and contains no heater/fan
+GPIO, placeholder pin, PWM, ADC, thermistor conversion, or MOSFET actuation path.
+The provisional numeric limit header was removed because unvalidated values are
+not a hardware contract.
 
-The build currently uses a provisional 4 MiB dual-OTA partition layout because
-that is the conservative ESP32-S3 Super Mini baseline. The exact module/flash
-population on the Jump Jet PCB must be confirmed before this becomes a release
-hardware constraint.
+The build retains a provisional 4 MiB dual-OTA partition layout solely as an
+ESP32-S3 development baseline. It is not a release hardware constraint.

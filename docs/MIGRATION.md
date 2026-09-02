@@ -11,9 +11,10 @@ unmaintained upstream historical reference. It is not production Jump Jet code.
 | Three ad-hoc thermistor reads | Product-local calibrated ADC/NTC component with explicit open/short states |
 | Combined PID and safety function | Auditable interlock, fault, actuator, and control layers |
 | Unauthenticated GET mutations | Validated JSON mutations with a same-origin custom-header gate |
-| Upload rejected only by image validity | Pre-upload heat guard, post-upload heat recheck, and project identity check |
+| Upload rejected only by image validity | Pre-upload thermal-state guard, immediate pre-selection recheck, and product identity check |
 
 The first milestone is intentionally cold-safe. A later hardware-commissioning
 milestone will add ADC, fan, and heater drivers behind the tested interlock.
-PrusaLink status age now flows from `dc_prusa` into the product interlock, but AUTO
-remains disabled until the hardware is reviewed and commissioned.
+Jump Jet consumes the freshness-qualified result from `dc_prusa` and does not
+maintain a second product timer. Only exact `PRINTING` is eligible for AUTOMATIC,
+which remains fail-cold until the production target mapping is defined.
