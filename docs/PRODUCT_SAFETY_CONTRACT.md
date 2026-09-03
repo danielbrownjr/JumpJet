@@ -93,7 +93,10 @@ Those temperatures are observations, not firmware thresholds.
 ## Hardware-dependent TBDs
 
 The full Q1/F2/PCB copper/connectors/wiring path is not validated, and the
-authoritative `.kicad_pcb` is missing. Final GPIO, ADC, thermistor conversion,
+Rev A.4.1 schematic is the current hardware authority. The Rev A PCB layout does
+not yet exist and must be implemented and validated during Phase 1. Hardware
+actuation remains blocked until the resulting PCB/current path and the other
+safety-critical hardware are validated. Final GPIO, ADC, thermistor conversion,
 protection thresholds, cooldown criteria, and recovery thresholds must not be
 invented. Sanyo Denki 9GA0424P3J001 is a prototype fan candidate only and is not
 BOM-final.
