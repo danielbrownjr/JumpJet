@@ -20,12 +20,25 @@ sheets in this directory. Project-local symbols and footprints resolve through
   [`docs/PHASE1_HARDWARE_REGISTER.md`](../../../docs/PHASE1_HARDWARE_REGISTER.md).
 - Native KiCad ERC has not been run in this environment because `kicad-cli` is
   unavailable. The archive provenance note records the same limitation.
+- Hierarchical-sheet and project-local library paths pass static resolution.
+  Placeholder footprint references `TBD:High_Current_2Pin`,
+  `TBD:DC_DC_Module`, `TBD:Aux_2Pin`, and `Package_DirectFET:TBD` remain
+  intentionally unresolved and must be replaced before PCB implementation.
 
 ## Footprint status
 
 `JumpJet.pretty/ESP32-S3_SuperMini_2x9.kicad_mod` is the drilled legacy
 footprint referenced by Rev A.4.1. It is retained so the current schematic
 resolves, but it is obsolete for the selected production mounting method.
+
+`JumpJet.pretty/ESP32-S3_SuperMini_2x9_Castellated_PROVISIONAL.kicad_mod` is an
+unassigned iteration footprint for direct castellated soldering. Its body,
+USB shell, nominal pitch/row spacing, and derived longitudinal registration use
+the current physical evidence. Its receiving-land depth, antenna graphic, and
+underside-contact exclusion remain provisional. It deliberately has no locating
+holes because the previous coordinates do not reconcile with the updated
+longitudinal datum. Do not release or assign it without the required 1:1 fit
+check and completion of the blockers in the hardware register.
 
 ## Source-package exclusions
 

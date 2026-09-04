@@ -9,6 +9,9 @@ implementation starts, and keep only the summary checkbox here.
 - [x] Review the Rev A.4.1 schematic package and record it as the current
   authoritative schematic baseline in the
   [Phase 1 hardware register](docs/PHASE1_HARDWARE_REGISTER.md)
+- [x] Check the authoritative Rev A.4.1 KiCad project, hierarchical sheets,
+  project symbol/footprint libraries, and preliminary BOM into
+  `hardware/kicad/JumpJet_RevA/`
 - [ ] Create the first Rev A `.kicad_pcb` after the mechanical and electrical
   layout blockers close
 - [ ] Add the current BOM with manufacturer part numbers and acceptable substitutions
@@ -16,9 +19,9 @@ implementation starts, and keep only the summary checkbox here.
 - [x] Record the measured ESP32-S3 Super Mini envelope and provisional nominal
   pin geometry
 - [ ] Verify the installed ESP32-S3 Super Mini flash size
-- [ ] Complete the production castellated footprint after castellation dimensions,
-  exact registration, underside envelope/height, antenna keepout, USB access
-  envelope, Pin 1, and physical pin numbering are verified
+- [ ] Complete the production castellated footprint after the provisional land
+  geometry and exact registration, underside-contact isolation map, antenna
+  keepout, USB access envelope, and physical pin numbering are verified
 - [ ] Confirm the complete GPIO/ADC assignment, including boot strapping and USB pins
 - [x] Record standalone CZ4060 rated and measured power/current at 24 V
 - [ ] Validate the full Jump Jet Q1/F2/PCB/connector/wiring path at the 200 W / 8.33 A design basis
@@ -37,10 +40,14 @@ implementation starts, and keep only the summary checkbox here.
 
 - [ ] Define the board outline, mounting-hole coordinates, connector-facing
   edges, and USB mechanical datum
-- [ ] Measure ESP32 castellation dimensions and exact body/pad registration
-- [ ] Measure the ESP32 underside component envelope and maximum height
+- [x] Measure ESP32 castellation width and the non-USB edge-to-first-castellation datum
+- [ ] Verify exact ESP32 body/pad registration on a 1:1 production-footprint plot
+- [x] Confirm the ESP32 underside has no mounted components
+- [ ] Map the exposed underside contacts and define the carrier isolation region
 - [ ] Identify and measure the actual ESP32 antenna keepout
-- [ ] Measure the USB-C shell, mating-plug, cable-head, and service-access envelope
+- [x] Measure the ESP32 USB-C shell envelope
+- [ ] Measure the USB-C mating-plug/cable-head envelope and define carrier-edge,
+  enclosure, and service-access clearances
 - [ ] Establish the external 5 V / USB-C VBUS topology and mixed-source backfeed behavior
 - [ ] Verify the Q1 footprint and multipad mapping
 - [ ] Verify the F2 holder footprint and service/removal clearance

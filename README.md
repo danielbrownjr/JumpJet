@@ -52,9 +52,11 @@ sizing remains the rated 24 V / 200 W / 8.33 A case.
 
 That test did **not** validate the complete Jump Jet Q1/F2/PCB/connector/wiring
 path or installed operation. The Rev A.4.1 schematic is the current hardware
-authority. The Rev A PCB has not yet been created; PCB implementation and
-validation are the current Phase-1 hardware work, not an artifact-recovery
-problem. Detailed status and blockers are tracked in the
+authority, and its [KiCad project source](hardware/kicad/JumpJet_RevA/README.md)
+is checked into this repository. The Rev A PCB has not yet been created; PCB
+implementation and validation are the current Phase-1 hardware work. The
+checked-in schematic is not fabrication-ready and does not authorize heater
+actuation. Detailed status and blockers are tracked in the
 [Phase 1 hardware register](docs/PHASE1_HARDWARE_REGISTER.md). GPIO, ADC,
 thermistor, protection, and cooldown thresholds therefore remain TBD. The Sanyo
 Denki 9GA0424P3J001 is only a prototype fan candidate, not BOM-final.

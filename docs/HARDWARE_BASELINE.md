@@ -1,14 +1,17 @@
 # Hardware baseline — Rev A Phase 1
 
-Rev A.4.1 is the current authoritative schematic baseline. It is intentionally
-schematic-only: there is no missing authoritative PCB artifact to recover. The
-first Rev A `.kicad_pcb` is being created as the next Phase-1 implementation
-stage.
+Rev A.4.1 is the current authoritative schematic baseline. Its
+[KiCad project source](../hardware/kicad/JumpJet_RevA/README.md) is checked into
+the repository. The source is intentionally schematic-only: the first Rev A
+`.kicad_pcb` has not yet been created and remains active Phase-1 implementation
+work.
 
 The detailed living source of truth for measurements, component candidates,
 design decisions, provisional values, blockers, and validation status is the
 [Phase 1 hardware register](PHASE1_HARDWARE_REGISTER.md). Presence in that
 register does not make a candidate BOM-final or approve fabrication.
+Checking in the KiCad source likewise does not make the design fabrication-ready
+or authorize heater actuation.
 
 ## Confirmed
 
