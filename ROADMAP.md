@@ -19,10 +19,12 @@ no phase passes its gate without the listed evidence.
 
 ## Phase 1 — freeze the hardware contract
 
-**Status:** next
+**Status:** active
 
-- review the current schematic, PCB layout, BOM, enclosure, and airflow path
-- confirm the exact ESP32-S3 module, flash size, GPIO map, and boot-strap constraints
+- use Rev A.4.1 as the current authoritative schematic baseline
+- freeze the hardware contract and create/review the first Rev A PCB during Phase 1
+- review the BOM, enclosure, mechanical interfaces, and airflow path
+- confirm the exact ESP32-S3 Super Mini revision, flash size, GPIO map, and boot-strap constraints
 - identify heater, MOSFET, fans, thermistors, connectors, fuse, thermal cutoff, and switch
 - calculate steady and worst-case current, connector loading, copper temperature rise,
   MOSFET dissipation, gate drive, voltage drop, ADC range, and protection margins
