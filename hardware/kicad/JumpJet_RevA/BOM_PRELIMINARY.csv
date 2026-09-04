@@ -1,0 +1,20 @@
+Reference,Qty,Function,Value / Requirement,Population,Status
+J1,1,24 V input,">=20 A keyed terminal, 14 AWG capable",BASE,Footprint TBD
+F1,1,Main fuse,15 A provisional,BASE,Verify coordination
+D1,1,Rail TVS,SMBJ30A provisional,BASE,Verify clamp vs MOSFET/PSU
+MOD1,1,Logic power,"24 V to 5 V, input transient rating >=60 V",BASE,Exact module TBD
+F2,1,Heater branch fuse,TBD after cold-start measurement,BASE,Open
+TF1,1,One-shot thermal fuse,"75 C, 15 A",BASE,BOM supplied
+TS1,1,Resettable thermal switch,"NC, 75 C, 16 A",BASE,BOM supplied
+J2,1,Heater output terminal,"Phoenix Contact MKDS 1,5/2 (1715022), 5.00 mm pitch, 17.5 A nominal",BASE,"Selected for 8.3 A heater; external splice/lead extension documented separately"
+J3,1,Integrated blower,"24 V, ~0.36 A; JST-XH 2-pin",BASE,"Footprint locked to JST_XH_B2B-XH-A; mating housing XHP-2; polarity to verify before harness build"
+Q1-Q2,2,Low-side switching,60 V logic-level N-MOSFET,BASE,Exact part/thermal design TBD
+Q3/F4/J4/D3,1 set,AUX1 PWM output,24 V optional,DNP,User expansion
+U1,1,Gate buffer,74AHCT125,BASE,Review drive/current
+U2,1,Controller module,"ESP32-S3FH4R2 SuperMini, 2x9 edge pads",BASE,Pin order and 15.24 mm row spacing confirmed
+J6-J8,3,Thermistors,"10 k NTC, 1 m lead",BASE,Beta/coefficients TBD
+J9 + divider,1,Fourth thermistor,10 k NTC,DNP,Expansion
+J10,1,Qwiic,JST-SH 1.0 mm 4-pin,BASE,Supported expansion
+F5,1,Qwiic protection,250 mA resettable fuse,BASE,Provisional
+JP1/JP2 + R18/R19,2,I2C pullups,4.7 k selectable,DNP/open,Populate only if required
+J11,1,User expansion,8-pin 2.54 mm,OPTIONAL,Pinout provisional
