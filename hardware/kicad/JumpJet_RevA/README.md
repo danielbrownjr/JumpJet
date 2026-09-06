@@ -11,6 +11,10 @@ sheets in this directory. Project-local symbols and footprints resolve through
 ## Authority and limitations
 
 - Rev A.4.1 is the current authoritative **schematic** baseline.
+- That baseline originally contained the obsolete two-wire low-side-switched fan
+  block. Phase-1 source now carries the reviewed provisional four-wire interface:
+  continuous fused 24 V and ground, open-drain PWM, and 3.3 V tach provisions.
+  The fan and interface remain prototype/candidate dependent and uncharacterized.
 - No `.kicad_pcb` exists in this source set. The first Rev A PCB remains active
   Phase 1 implementation work, not a missing artifact to recover.
 - This source is not fabrication-ready and does not authorize heater or fan
@@ -39,6 +43,12 @@ underside-contact exclusion remain provisional. It deliberately has no locating
 holes because the previous coordinates do not reconcile with the updated
 longitudinal datum. Do not release or assign it without the required 1:1 fit
 check and completion of the blockers in the hardware register.
+
+Current evidence supports a solid carrier PCB beneath the ESP32 module: there
+are no underside mounted components, but exposed underside contacts require an
+isolation-controlled region. A mandatory central window is not supported by the
+evidence. Underside contact mapping and the provisional antenna keepout remain
+fabrication blockers.
 
 ## Source-package exclusions
 

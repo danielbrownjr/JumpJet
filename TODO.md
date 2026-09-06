@@ -27,6 +27,9 @@ implementation starts, and keep only the summary checkbox here.
 - [ ] Validate the full Jump Jet Q1/F2/PCB/connector/wiring path at the 200 W / 8.33 A design basis
 - [x] Select the native four-wire fan architecture: continuous fused 24 V power,
   separate open-drain PWM, and separate tach feedback
+- [x] Create the
+  [9GA0424P3J001 characterization record](docs/hardware/9ga0424p3j001-characterization.md)
+- [ ] Characterize the physical 9GA0424P3J001 specimen on arrival
 - [ ] Characterize the 9GA0424P3J001 prototype and finalize candidate-specific
   pinout, current, connector, PWM/tach electrical details, RPM behavior, and
   stall thresholds; it remains prototype-only
@@ -54,6 +57,8 @@ implementation starts, and keep only the summary checkbox here.
 - [ ] Select TF1/TS1 parts and their mounting/thermal-coupling architecture
 - [ ] Select and verify J1, F1, and MOD1 parts and footprints
 - [ ] Characterize the production PSU current limit and complete fuse coordination
+- [ ] Close the aligned local mechanical constraint map before creating
+  fabrication-intent `Edge.Cuts`
 
 ## Firmware — immediate
 
@@ -96,7 +101,7 @@ implementation starts, and keep only the summary checkbox here.
 
 - [ ] Implement `jj_board` with safe-at-reset GPIO initialization
 - [ ] Implement ADC sampling, calibration, filtering, and explicit sensor status
-- [ ] Implement two fan channels and available fan/airflow proof
+- [ ] Implement the characterized fan channel and available fan/airflow proof
 - [ ] Define the bounded fan spin-up/proof timeout and the evidence that changes proof from pending to proven or failed
 - [ ] Implement physical-switch handling and debouncing
 - [ ] Implement bounded settings persistence with corrupt-NVS recovery
@@ -112,7 +117,7 @@ implementation starts, and keep only the summary checkbox here.
 
 - [ ] Finalize Jump Jet API v2 state and mutation schemas
 - [ ] Add chamber, outlet, and case temperature telemetry with sensor status
-- [ ] Add target, heater duty, both fan states, mode, and commissioning state
+- [ ] Add target, heater duty, fan command/proof state, mode, and commissioning state
 - [ ] Add PrusaLink connection, printer state, bed temperature/target, and sample age
 - [ ] Define optional Klipper/Moonraker integration for read-only printer state and bed-target telemetry, with the same stale-data fail-cold semantics as PrusaLink
 - [ ] Add visible interlocks, latched fault reason, and safe recovery guidance

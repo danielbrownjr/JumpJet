@@ -100,3 +100,10 @@ safety-critical hardware are validated. Final GPIO, ADC, thermistor conversion,
 protection thresholds, cooldown criteria, and recovery thresholds must not be
 invented. Sanyo Denki 9GA0424P3J001 is a prototype fan candidate only and is not
 BOM-final.
+
+The intended replacement-fan architecture is continuous fused 24 V plus ground,
+separate open-drain PWM, and tach feedback. The Rev A.4.1 low-side switched fan-
+power block is obsolete for production. No production pulses/revolution,
+minimum duty, RPM/stall threshold, or proof timeout exists before
+characterization; a candidate-specific 25 kHz test point does not freeze final
+fan policy. Physical fan proof remains mandatory before heater actuation.

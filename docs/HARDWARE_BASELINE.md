@@ -2,9 +2,8 @@
 
 Rev A.4.1 is the current authoritative schematic baseline. Its
 [KiCad project source](../hardware/kicad/JumpJet_RevA/README.md) is checked into
-the repository. The source is intentionally schematic-only: the first Rev A
-`.kicad_pcb` has not yet been created and remains active Phase-1 implementation
-work.
+the repository. The checked-in source set currently contains no `.kicad_pcb`;
+creating the first Rev A PCB remains active Phase-1 implementation work.
 
 The detailed living source of truth for measurements, component candidates,
 design decisions, provisional values, blockers, and validation status is the
@@ -22,6 +21,11 @@ or authorize heater actuation.
   74–75 °C.
 - Full results: [CZ4060 characterization](hardware/cz4060-characterization.md).
 - The Sanyo Denki 9GA0424P3J001 is a prototype fan candidate, not BOM-final.
+- The Phase-1 replacement-fan contract is continuous fused 24 V and ground with
+  separate open-drain PWM and tach. The original Rev A.4.1 low-side switched
+  two-wire block is retained as baseline evidence, not production intent.
+- Published prototype facts and pending measurements are tracked in the
+  [9GA0424P3J001 characterization record](hardware/9ga0424p3j001-characterization.md).
 
 ## Not confirmed
 
@@ -30,9 +34,19 @@ module implementation, and the complete power path have not been validated
 together. The upstream Jetpack pin assignments are historical facts, not Jump
 Jet assignments.
 
-No GPIO, ADC, divider, thermistor conversion, fan/PWM method, protection threshold,
-thermal trip, cooldown criterion, or recovery threshold may be finalized without
-the corresponding source files and measured evidence.
+No GPIO, ADC, divider, thermistor conversion, protection threshold, thermal trip,
+cooldown criterion, or recovery threshold may be finalized without corresponding
+source files and measured evidence. Fan interface values, production fan,
+tach electrical behavior, pulses/revolution, RPM versus duty, minimum reliable
+command, startup behavior, RPM/stall thresholds, and installed airflow/thermal
+performance remain unresolved. A model-specific 25 kHz candidate test point is
+not universal production policy.
+
+The newer Prusa-derived void is the preferred enclosure-space reference; the
+earlier smaller-void system-level incompatibility conclusion is superseded. PCB
+over the cold-air intake remains preferred and mechanically plausible, but the
+installed transform and aligned local constraint map are unresolved, so
+fabrication-intent `Edge.Cuts` remain blocked.
 
 ## Firmware consequence
 
