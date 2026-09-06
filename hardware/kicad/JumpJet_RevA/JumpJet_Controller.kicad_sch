@@ -1289,7 +1289,7 @@
     (effects (font (size 0.85 0.85)) (justify left bottom))
     (uuid 07e6424e-d1ec-4ea7-86fb-cfb57cd3580e)
   )
-  (global_label "FAN_PWM" (shape bidirectional) (at 96.52 76.2 0) (fields_autoplaced)
+  (global_label "LEGACY_FAN_PWM_NC" (shape bidirectional) (at 96.52 76.2 0) (fields_autoplaced)
     (effects (font (size 0.85 0.85)) (justify left bottom))
     (uuid 09e2faff-9cca-459f-94ac-bcbcda17b21d)
   )
