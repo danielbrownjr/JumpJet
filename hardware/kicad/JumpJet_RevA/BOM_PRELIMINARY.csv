@@ -2,7 +2,7 @@ Reference,Qty,Function,Value / Requirement,Population,Status
 J1,1,24 V input,">=20 A keyed terminal, 14 AWG capable",BASE,Footprint TBD
 F1,1,Main fuse,15 A provisional,BASE,Verify coordination
 D1,1,Rail TVS,SMBJ30A provisional,BASE,Verify clamp vs MOSFET/PSU
-MOD1,1,Logic power,"24 V to 5 V, input transient rating >=60 V",BASE,Exact module TBD
+MOD1,1,Gate-domain buck architecture,"TI LMR36520 strong candidate; +24V_PROT to +5V_SYS_GATE; >=1.5 A provisional floor",BASE,"Connector symbol remains an implementation placeholder; discrete circuit footprint thermal derating and final MPN remain open; not BOM-final"
 F2,1,Heater branch fuse,Littelfuse 0287015.U 15 A ATOF candidate,BASE,"Strong candidate; cold-start characterization complete; PSU/fuse coordination and holder thermal validation open"
 TF1,1,One-shot thermal fuse,"Historical schematic placeholder: 75 C / 15 A",BASE,"Production part trip temperature mounting and thermal coupling TBD"
 TS1,1,Resettable thermal switch,"Historical schematic placeholder: NC 75 C / 16 A",BASE,"Production part trip temperature mounting and thermal coupling TBD"
@@ -12,10 +12,15 @@ Q1,1,Heater low-side switch,TI CSD18540Q5B candidate,BASE,"Strong candidate only
 Q2,1,Fan PWM open-drain interface,2N7002-class logic N-MOSFET,BASE,"Provisional control transistor; former 60 V fan-power-switch role is obsolete; exact MPN TBD"
 D2,0,Legacy fan flyback diode,Obsolete with continuous-power four-wire fan architecture,DNP,Removed from Phase 1 schematic
 R3/R4,2,Fan PWM gate network,"1 k series / 100 k direct pulldown",BASE,"Provisional values; old fan-power MOSFET gate-network role superseded"
-R10/R11/C3,3,3.3 V tach interface,"1 k series / 10 k pull-up / optional filter capacitor DNP",BASE,"Provisional values; exact tach output and filter/protection requirements pending"
+R23/R24/C11,3,3.3 V tach interface,"1 k series / 10 k pull-up / optional filter capacitor DNP",BASE,"Provisional values; exact tach output and filter/protection requirements pending"
 TP9/TP10,2,Fan interface test points,TP_FAN_TACH / TP_FAN_PWM,BASE,Phase 1 bring-up provisions
 Q3/F4/J4/D3,1 set,AUX1 PWM output,24 V optional,DNP,User expansion
-U1,1,Gate buffer,74AHCT125,BASE,"Existing Rev A.4.1 implementation; heater OE/default-disable and power-domain correction remains open"
+U1,1,Heater gate buffer/level translator,SN74LV4T125 TSSOP strong candidate,BASE,"Powered only from +5V_SYS_GATE; Ioff-capable candidate; exact ordering code and bench qualification remain open; not BOM-final"
+Q4,1,Heater-driver OE open-drain actuator,2N7002-class N-MOSF,BASE,"Provisional implementation; exact MPN not selected; MCU net HEATER_GATE_EN is intentionally unassigned"
+R20/R21/R22,3,Heater-driver OE bias,"10 k pull-up / 1 k series / 100 k gate pulldown",BASE,"All values provisional; /OE defaults high/disabled and Q4 must pull it low to enable"
+R1/R2/R7,3,Heater PWM/gate passives,"47 ohm gate series / 10 k Q1 gate pulldown / 100 k PWM input pulldown",BASE,"All values provisional pending waveform leakage PWM-frequency switching-loss and transition testing"
+C12,1,Gate-buffer local decoupling,100 nF provisional,BASE,"Place at U1 supply pins; dielectric and final value remain subject to implementation review"
+TP11-TP16,6,Power and heater-driver test points,"+5V_SYS_GATE / +5V_MCU / OE / PWM input / Q1 gate / Q1 source",BASE,Required Phase 1 power-transition and gate-safety observations
 U2,1,Controller module,"ESP32-S3 Super Mini, 2x9 edge pads",BASE,"Identity confirmed; pad numbering receiving-land geometry registration underside isolation antenna keepout USB access and flash size remain open"
 J6-J8,3,Thermistors,"10 k NTC, 1 m lead",BASE,Beta/coefficients TBD
 J9 + divider,1,Fourth thermistor,10 k NTC,DNP,Expansion
