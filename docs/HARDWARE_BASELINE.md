@@ -26,13 +26,22 @@ or authorize heater actuation.
   two-wire block is retained as baseline evidence, not production intent.
 - Published prototype facts and pending measurements are tracked in the
   [9GA0424P3J001 characterization record](hardware/9ga0424p3j001-characterization.md).
+- Phase-1 schematic work now separates a protected-24-V-derived
+  `+5V_SYS_GATE` rail from the unresolved `+5V_MCU` service/source-selected
+  domain. The gate buffer cannot be powered from USB-only MCU power.
+- The heater driver now uses a hardware-default-disabled active-low OE topology:
+  an OE pull-up holds the driver disabled unless a separate open-drain enable
+  transistor is explicitly asserted. Generic `HEATER_GATE_EN` and
+  `HEATER_PWM_CMD` nets remain unassigned to controller pins.
 
 ## Not confirmed
 
 Q1, F2, PCB copper, connectors, wiring, installed airflow, the exact ESP32-S3
 module implementation, and the complete power path have not been validated
-together. The upstream Jetpack pin assignments are historical facts, not Jump
-Jet assignments.
+together. The LMR36520 and SN74LV4T125 are strong candidates, not BOM-final;
+the regulator circuit, `+5V_MCU` source selection, reverse-current behavior,
+and full power-transition bench matrix remain open. The upstream Jetpack pin
+assignments are historical facts, not Jump Jet assignments.
 
 No GPIO, ADC, divider, thermistor conversion, protection threshold, thermal trip,
 cooldown criterion, or recovery threshold may be finalized without corresponding

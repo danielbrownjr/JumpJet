@@ -84,12 +84,14 @@ implementation starts, and keep only the summary checkbox here.
   all final fan and auxiliary loads
 - [ ] Calculate connector/contact loading and wire ampacity with temperature derating
 - [ ] Calculate MOSFET conduction and switching loss at worst-case voltage, current, duty, and ambient
-- [ ] Correct gate-driver OE so heater drive is hardware-default-disabled during
-  power-up, power-down, reset, and brownout
-- [ ] Ensure USB/service power cannot energize the gate-driver power domain or Q1
+- [x] Implement separate `+5V_SYS_GATE` / `+5V_MCU` schematic domains and a
+  hardware-default-disabled heater-driver OE topology
+- [ ] Bench-verify that USB/service power cannot energize the gate-driver domain
+  or Q1 through every power-up, power-down, reset, brownout, and mixed-source state
 - [ ] Verify gate-driver partial-power-down behavior or provide equivalent isolation
-- [ ] Retain a direct Q1 gate pull-down independent of MCU and buffer state
-- [ ] Add test points for the gate-driver power domain, gate-driver OE, and Q1 gate
+- [x] Retain a direct provisional Q1 gate pull-down independent of MCU and buffer state
+- [x] Add schematic test points for both 5 V domains, gate-driver OE, heater PWM
+  input, Q1 gate, and Q1 source reference
 - [ ] Check gate voltage/current, MCU reset behavior, switching waveform, and MOSFET SOA
 - [ ] Calculate trace/via current capacity and expected copper temperature rise
 - [ ] Calculate thermistor-divider voltage and ADC counts over open, short, and operating range
