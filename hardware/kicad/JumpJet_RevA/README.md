@@ -21,10 +21,11 @@ sheets in this directory. Project-local symbols and footprints resolve through
   actuation.
 - Bench characterization establishes that the actual Super Mini's exposed 5 V
   pin and USB VBUS are directly coupled for system-design purposes. Rev A now
-  requires a physically accessible board-5-V disconnect upstream of the module
-  `+5V_MCU` node, opened before powered USB service. The implementation part and
-  footprint are not selected or drawn yet; TPS2116-only automatic selection is
-  not a valid solution for nodes already tied on the module.
+  routes the shared `+5V_SYS_GATE` source through D4 reverse isolation and the
+  physical SW1 RUN / USB SERVICE disconnect before the module `+5V_MCU` node.
+  D4 and SW1 are strong-candidate functional classes only; their exact MPNs and
+  footprints remain TBD. TPS2116-only automatic selection is not a valid
+  solution for nodes already tied on the module.
 - `+5V_SYS_GATE` remains a separate 24-V-derived actuator rail. USB must have no
   path to that rail, the gate buffer supply, or heater actuation.
 - `BOM_PRELIMINARY.csv` is archive context only. It contains placeholders and
