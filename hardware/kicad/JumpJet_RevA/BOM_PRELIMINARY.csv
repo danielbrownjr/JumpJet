@@ -3,6 +3,9 @@ J1,1,24 V input,">=20 A keyed terminal, 14 AWG capable",BASE,Footprint TBD
 F1,1,Main fuse,15 A provisional,BASE,Verify coordination
 D1,1,Rail TVS,SMBJ30A provisional,BASE,Verify clamp vs MOSFET/PSU
 MOD1,1,Gate-domain buck architecture,"TI LMR36520 strong candidate; +24V_PROT to +5V_SYS_GATE; >=1.5 A provisional floor",BASE,"Connector symbol remains an implementation placeholder; discrete circuit footprint thermal derating and final MPN remain open; not BOM-final"
+D4,1,MCU branch reverse-current isolation,"Low-Vf Schottky class; >=2 A practical current capability; exact MPN TBD",BASE,"Strong candidate only; footprint Vf reverse leakage elevated-temperature behavior dissipation and availability remain open; not BOM-final"
+SW1,1,RUN / USB SERVICE MCU power disconnect,"SPST slide-switch class; >=2 A at 5 V DC; contact resistance target <=50 mOhm and <=100 mOhm ceiling",BASE,"Strong candidate only; exact MPN footprint operating-temperature rating retention and service-edge mechanics remain open; not BOM-final"
+TPS2116 (no reference),0,Conditional source-mux concept,Not production intent for the current directly tied Super Mini VBUS/5 V topology,DNP,"Documentation-only; reconsider only for a future architecture with genuinely separate source nodes"
 F2,1,Heater branch fuse,Littelfuse 0287015.U 15 A ATOF candidate,BASE,"Strong candidate; cold-start characterization complete; PSU/fuse coordination and holder thermal validation open"
 TF1,1,One-shot thermal fuse,"Historical schematic placeholder: 75 C / 15 A",BASE,"Production part trip temperature mounting and thermal coupling TBD"
 TS1,1,Resettable thermal switch,"Historical schematic placeholder: NC 75 C / 16 A",BASE,"Production part trip temperature mounting and thermal coupling TBD"
@@ -20,7 +23,7 @@ Q4,1,Heater-driver OE open-drain actuator,2N7002-class N-MOSF,BASE,"Provisional 
 R20/R21/R22,3,Heater-driver OE bias,"10 k pull-up / 1 k series / 100 k gate pulldown",BASE,"All values provisional; /OE defaults high/disabled and Q4 must pull it low to enable"
 R1/R2/R7,3,Heater PWM/gate passives,"47 ohm gate series / 10 k Q1 gate pulldown / 100 k PWM input pulldown",BASE,"All values provisional pending waveform leakage PWM-frequency switching-loss and transition testing"
 C12,1,Gate-buffer local decoupling,100 nF provisional,BASE,"Place at U1 supply pins; dielectric and final value remain subject to implementation review"
-TP11-TP16,6,Power and heater-driver test points,"+5V_SYS_GATE / Super Mini-side +5V_MCU and USB-VBUS tied node / OE / PWM input / Q1 gate / Q1 source",BASE,"Required Phase 1 power-transition and gate-safety observations; add board-side MCU 5 V point if space permits after disconnect implementation"
+TP11-TP17,7,Power and heater-driver test points,"+5V_SYS_GATE / Super Mini-side +5V_MCU and USB-VBUS tied node / OE / PWM input / Q1 gate / Q1 source / pre-switch +5V_MCU_FEED",BASE,"Required Phase 1 power-transition and gate-safety observations; TP17 exposes the isolated board-derived feed before SW1"
 U2,1,Controller module,"ESP32-S3 Super Mini, 2x9 edge pads",BASE,"Identity confirmed; pad numbering receiving-land geometry registration underside isolation antenna keepout USB access and flash size remain open"
 J6-J8,3,Thermistors,"10 k NTC, 1 m lead",BASE,Beta/coefficients TBD
 J9 + divider,1,Fourth thermistor,10 k NTC,DNP,Expansion
