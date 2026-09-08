@@ -51,7 +51,10 @@ implementation starts, and keep only the summary checkbox here.
 - [x] Measure the ESP32 USB-C shell envelope
 - [ ] Measure the USB-C mating-plug/cable-head envelope and define carrier-edge,
   enclosure, and service-access clearances
-- [ ] Establish the external 5 V / USB-C VBUS topology and mixed-source backfeed behavior
+- [x] Establish the external 5 V / USB-C VBUS topology: the actual Super Mini's
+  exposed 5 V pin and USB VBUS are directly coupled for system-design purposes
+- [ ] Select, rate, and place the Rev A physical board-5-V disconnect; verify USB
+  access, service labeling, jumper/switch clearance, retention, and misuse visibility
 - [ ] Verify the Q1 footprint and multipad mapping
 - [ ] Verify the F2 holder footprint and service/removal clearance
 - [ ] Select TF1/TS1 parts and their mounting/thermal-coupling architecture
@@ -86,6 +89,9 @@ implementation starts, and keep only the summary checkbox here.
 - [ ] Calculate MOSFET conduction and switching loss at worst-case voltage, current, duty, and ambient
 - [x] Implement separate `+5V_SYS_GATE` / `+5V_MCU` schematic domains and a
   hardware-default-disabled heater-driver OE topology
+- [ ] Implement the adopted physical disconnect between board-derived MCU 5 V
+  and the Super Mini-side `+5V_MCU` / USB-VBUS tied node; removable jumper/shunt
+  is preferred but its part, rating, and footprint remain unresolved
 - [ ] Bench-verify that USB/service power cannot energize the gate-driver domain
   or Q1 through every power-up, power-down, reset, brownout, and mixed-source state
 - [ ] Verify gate-driver partial-power-down behavior or provide equivalent isolation

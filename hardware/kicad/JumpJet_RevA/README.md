@@ -19,6 +19,14 @@ sheets in this directory. Project-local symbols and footprints resolve through
   Phase 1 implementation work, not a missing artifact to recover.
 - This source is not fabrication-ready and does not authorize heater or fan
   actuation.
+- Bench characterization establishes that the actual Super Mini's exposed 5 V
+  pin and USB VBUS are directly coupled for system-design purposes. Rev A now
+  requires a physically accessible board-5-V disconnect upstream of the module
+  `+5V_MCU` node, opened before powered USB service. The implementation part and
+  footprint are not selected or drawn yet; TPS2116-only automatic selection is
+  not a valid solution for nodes already tied on the module.
+- `+5V_SYS_GATE` remains a separate 24-V-derived actuator rail. USB must have no
+  path to that rail, the gate buffer supply, or heater actuation.
 - `BOM_PRELIMINARY.csv` is archive context only. It contains placeholders and
   does not override statuses in
   [`docs/PHASE1_HARDWARE_REGISTER.md`](../../../docs/PHASE1_HARDWARE_REGISTER.md).

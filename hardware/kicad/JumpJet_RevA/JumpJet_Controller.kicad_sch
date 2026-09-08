@@ -1258,7 +1258,7 @@
     (effects (font (size 0.95 0.95) (thickness 0.120)) (justify left bottom))
     (uuid 989d1c1b-e73b-4557-9840-8d28f49f2f69)
   )
-  (text "+5V_MCU source selection is TBD: do not bridge to +5V_SYS_GATE or assume USB/external-5V isolation."
+  (text "+5V_MCU is the Super Mini 5V/USB-VBUS tied node. Insert the required physical board-5V disconnect upstream; never bridge to +5V_SYS_GATE."
     (at 28.00 124.00 0)
     (effects (font (size 0.95 0.95) (thickness 0.120)) (justify left bottom))
     (uuid d7a12df2-cad0-4bf1-bfb7-709f03e42f5f)

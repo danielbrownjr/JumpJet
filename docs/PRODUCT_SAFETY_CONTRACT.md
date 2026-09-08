@@ -41,6 +41,12 @@ AUTOMATIC production heating is unavailable even when `PRINTING` is fresh.
   and evidence of sane commanded-OFF behavior before heat may be enabled again.
 - Cooldown and fault fan policy is product-owned and may operate in OFF.
 - Browser and API authorization are management controls, never the safety boundary.
+- The actual Super Mini directly couples USB VBUS to its exposed 5 V pin. Rev A
+  therefore requires a physical disconnect between board-derived MCU 5 V and
+  the module node, opened before powered USB service. USB must never power
+  `+5V_SYS_GATE`, the heater gate driver, the MOSFET actuation path, or any other
+  safety-critical actuator domain. Removal of 24 V must collapse gate power even
+  if USB keeps the MCU alive.
 
 Reset-cause persistence, stuck-on proof, physical sensors, and physical fan proof
 are not implemented in this heater-incapable foundation. They are mandatory gates

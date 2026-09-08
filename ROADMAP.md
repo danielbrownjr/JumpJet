@@ -25,6 +25,9 @@ no phase passes its gate without the listed evidence.
 - freeze the hardware contract and create/review the first Rev A PCB during Phase 1
 - review the BOM, enclosure, mechanical interfaces, and airflow path
 - confirm the exact ESP32-S3 Super Mini revision, flash size, GPIO map, and boot-strap constraints
+- implement a physically accessible, visibly labeled disconnect between
+  board-derived MCU 5 V and the Super Mini's directly coupled 5 V/USB-VBUS node;
+  seamless simultaneous board/USB power is out of scope for Rev A
 - identify heater, MOSFET, characterized four-wire fan channel, thermistors,
   connectors, fuses, thermal cutoff, and switch
 - characterize the prototype fan before freezing interface-derived firmware

@@ -1378,7 +1378,7 @@
     (effects (font (size 1.80 1.80) (thickness 0.225)) (justify left bottom))
     (uuid 35f7f43e-ad43-476c-8fd0-7eb41fba3c3a)
   )
-  (text "MOD1 is an LMR36520 architecture placeholder: +24V_PROT to +5V_SYS_GATE only; +5V_MCU source selection remains TBD."
+  (text "MOD1 is an LMR36520 architecture placeholder for +5V_SYS_GATE. Board MCU 5V regulation and the required physical disconnect to +5V_MCU remain unresolved."
     (at 23.00 92.00 0)
     (effects (font (size 0.95 0.95) (thickness 0.120)) (justify left bottom))
     (uuid 7f86481b-c093-4c97-83e9-606d5d071579)
@@ -3134,7 +3134,7 @@
     (property "Value" "TP_5V_MCU" (at 151.22 111.77 0) (effects (font (size 0.85 0.85))))
     (property "Footprint" "TestPoint:TestPoint_Pad_D1.5mm" (at 147.22 108.77 0) (effects (font (size 0.85 0.85)) hide))
     (property "Datasheet" "" (at 147.22 108.77 0) (effects (font (size 0.85 0.85)) hide))
-    (property "Description" "MCU-domain rail test point; source selection remains TBD" (at 147.22 108.77 0) (effects (font (size 0.85 0.85)) hide))
+    (property "Description" "Super Mini-side 5V/USB-VBUS tied-node test point; physical board-5V disconnect is required upstream" (at 147.22 108.77 0) (effects (font (size 0.85 0.85)) hide))
     (pin "1" (uuid e56fbc18-6b61-4f88-bc30-66fca23e14c8))
     (instances (project "JumpJet_Controller_RevA4" (path "/7daa19f2-c821-405d-9b33-9c66dc62ede9" (reference "TP12") (unit 1))))
   )

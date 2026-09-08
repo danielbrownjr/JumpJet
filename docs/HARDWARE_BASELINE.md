@@ -26,9 +26,19 @@ or authorize heater actuation.
   two-wire block is retained as baseline evidence, not production intent.
 - Published prototype facts and pending measurements are tracked in the
   [9GA0424P3J001 characterization record](hardware/9ga0424p3j001-characterization.md).
-- Phase-1 schematic work now separates a protected-24-V-derived
-  `+5V_SYS_GATE` rail from the unresolved `+5V_MCU` service/source-selected
-  domain. The gate buffer cannot be powered from USB-only MCU power.
+- Phase-1 schematic work separates the protected-24-V-derived
+  `+5V_SYS_GATE` actuator rail from the MCU logic domain. Bench measurements of
+  the actual Super Mini establish that its USB VBUS and exposed 5 V pin are one
+  effectively direct, bidirectional node: 4.993 V applied to the pin produced
+  4.992 V at VBUS; USB at 5.13 V produced 5.11 V at the pin; unpowered
+  continuity was confirmed.
+- Rev A therefore requires mutually exclusive installed/USB service power at
+  the module node. Board-derived MCU 5 V reaches the module only through a
+  physical disconnect that must be opened before powered USB attachment. A
+  removable jumper/shunt is preferred, but its part and footprint are not yet
+  selected. Seamless simultaneous source operation is out of scope.
+- USB shall not be routed through the carrier and must never source `+5V_SYS_GATE`.
+  The gate buffer cannot be powered from USB-only MCU power.
 - The heater driver now uses a hardware-default-disabled active-low OE topology:
   an OE pull-up holds the driver disabled unless a separate open-drain enable
   transistor is explicitly asserted. Generic `HEATER_GATE_EN` and
@@ -39,9 +49,22 @@ or authorize heater actuation.
 Q1, F2, PCB copper, connectors, wiring, installed airflow, the exact ESP32-S3
 module implementation, and the complete power path have not been validated
 together. The LMR36520 and SN74LV4T125 are strong candidates, not BOM-final;
-the regulator circuit, `+5V_MCU` source selection, reverse-current behavior,
-and full power-transition bench matrix remain open. The upstream Jetpack pin
+the regulator circuit, physical MCU service-disconnect implementation and rating,
+disconnect accessibility/labeling, and full power-transition bench matrix remain
+open. TPS2116-only automatic source selection is superseded because the module
+has no separately controllable USB and exposed-5-V nodes. The upstream Jetpack pin
 assignments are historical facts, not Jump Jet assignments.
+
+## Rev A MCU service-power states
+
+| State | Physical disconnect | Required outcome |
+|---|---|---|
+| Normal 24 V operation; USB absent | Closed | Board-derived MCU 5 V powers the Super Mini. `+5V_SYS_GATE` remains an independent 24-V-only actuator rail; firmware safety still controls actuation. |
+| USB service; 24 V absent | Open before USB attachment | USB powers only the Super Mini-side MCU logic node. Gate power is absent and the heater is physically incapable. |
+| USB service; 24 V present | Open before USB attachment | USB powers the MCU node; `+5V_SYS_GATE` may exist from 24 V but remains isolated and the default-disabled gate/OE architecture keeps the heater off unless every normal hardware and firmware condition is valid. |
+| Disconnect mistakenly closed while powered USB is attached | Invalid/misuse | Board 5 V and host VBUS can contend or backfeed. Silkscreen and accessible disconnect geometry must make this misuse obvious; Rev A does not promise safe seamless coexistence. |
+| USB removed while 24 V absent | Open | MCU loses power cleanly; no actuator domain may remain energized from USB capacitance or another path. |
+| 24 V removed while USB remains | Open | MCU may remain alive, but `+5V_SYS_GATE` collapses independently and firmware must truthfully report heater actuation unavailable. |
 
 No GPIO, ADC, divider, thermistor conversion, protection threshold, thermal trip,
 cooldown criterion, or recovery threshold may be finalized without corresponding

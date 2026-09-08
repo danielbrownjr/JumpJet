@@ -20,7 +20,7 @@ Q4,1,Heater-driver OE open-drain actuator,2N7002-class N-MOSF,BASE,"Provisional 
 R20/R21/R22,3,Heater-driver OE bias,"10 k pull-up / 1 k series / 100 k gate pulldown",BASE,"All values provisional; /OE defaults high/disabled and Q4 must pull it low to enable"
 R1/R2/R7,3,Heater PWM/gate passives,"47 ohm gate series / 10 k Q1 gate pulldown / 100 k PWM input pulldown",BASE,"All values provisional pending waveform leakage PWM-frequency switching-loss and transition testing"
 C12,1,Gate-buffer local decoupling,100 nF provisional,BASE,"Place at U1 supply pins; dielectric and final value remain subject to implementation review"
-TP11-TP16,6,Power and heater-driver test points,"+5V_SYS_GATE / +5V_MCU / OE / PWM input / Q1 gate / Q1 source",BASE,Required Phase 1 power-transition and gate-safety observations
+TP11-TP16,6,Power and heater-driver test points,"+5V_SYS_GATE / Super Mini-side +5V_MCU and USB-VBUS tied node / OE / PWM input / Q1 gate / Q1 source",BASE,"Required Phase 1 power-transition and gate-safety observations; add board-side MCU 5 V point if space permits after disconnect implementation"
 U2,1,Controller module,"ESP32-S3 Super Mini, 2x9 edge pads",BASE,"Identity confirmed; pad numbering receiving-land geometry registration underside isolation antenna keepout USB access and flash size remain open"
 J6-J8,3,Thermistors,"10 k NTC, 1 m lead",BASE,Beta/coefficients TBD
 J9 + divider,1,Fourth thermistor,10 k NTC,DNP,Expansion
