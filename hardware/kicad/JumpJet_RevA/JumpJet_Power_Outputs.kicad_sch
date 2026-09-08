@@ -1315,13 +1315,6 @@
 
 
 
-  (wire (pts (xy 264.16 55.88) (xy 267.97 55.88))
-    (stroke (width 0) (type default))
-    (uuid 142205d2-4395-4fda-8dcd-6861e5acd394)
-  )
-
-
-
   (wire (pts (xy 298.45 53.34) (xy 299.72 53.34))
     (stroke (width 0) (type default))
     (uuid 3fa443a8-8045-4e8c-a625-cedb4d14a1aa)
@@ -1408,7 +1401,7 @@
     (uuid efadd267-eef7-4648-9d7b-c0ed698f7488)
   )
 
-  (label "GND" (at 264.16 55.88 0)
+  (label "GND" (at 267.97 57.15 0)
     (effects (font (size 0.85 0.85)) (justify left bottom))
     (uuid 0e4edc5b-8fb0-4c10-972d-4773d90023d8)
   )
@@ -1440,15 +1433,15 @@
     (effects (font (size 0.85 0.85)) (justify left bottom))
     (uuid 88505649-d9d1-41d2-ad8c-190f3c82bd51)
   )
-  (label "FAN_24V" (at 267.97 53.34 0)
+  (label "FAN_24V" (at 267.97 54.61 0)
     (effects (font (size 0.85 0.85)) (justify left bottom))
     (uuid 8f28c6e1-81d8-43cf-9997-62f5bf560bcd)
   )
-  (label "FAN_TACH_WIRE" (at 267.97 58.42 0)
+  (label "FAN_TACH_WIRE" (at 267.97 59.69 0)
     (effects (font (size 0.85 0.85)) (justify left bottom))
     (uuid 6b56096b-9a75-4c0c-a91d-0b8e9adfe5cb)
   )
-  (label "FAN_PWM_WIRE" (at 267.97 60.96 0)
+  (label "FAN_PWM_WIRE" (at 267.97 62.23 0)
     (effects (font (size 0.85 0.85)) (justify left bottom))
     (uuid b40cbb79-279b-4575-9997-ec73c77fcc9a)
   )
