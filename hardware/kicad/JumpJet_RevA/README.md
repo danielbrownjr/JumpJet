@@ -30,8 +30,10 @@ sheets in this directory. Project-local symbols and footprints resolve through
 - `BOM_PRELIMINARY.csv` is archive context only. It contains placeholders and
   does not override statuses in
   [`docs/PHASE1_HARDWARE_REGISTER.md`](../../../docs/PHASE1_HARDWARE_REGISTER.md).
-- Native KiCad ERC has not been run in this environment because `kicad-cli` is
-  unavailable. The archive provenance note records the same limitation.
+- Native KiCad 10.0.6 opens the root hierarchy successfully, and native ERC is
+  reusable with the installed standard library tables. ERC intentionally still
+  reports the unresolved `+5V_MCU` source path, unassigned control nets, TBD
+  footprints, intentional legacy NC nets, and reviewed cached-symbol differences.
 - Hierarchical-sheet and project-local library paths pass static resolution.
   Placeholder footprint references `TBD:High_Current_2Pin`,
   `TBD:DC_DC_Module`, `TBD:Aux_2Pin`, and `Package_DirectFET:TBD` remain
