@@ -25,8 +25,8 @@ R1/R2/R7,3,Heater PWM/gate passives,"47 ohm gate series / 10 k Q1 gate pulldown 
 C12,1,Gate-buffer local decoupling,100 nF provisional,BASE,"Place at U1 supply pins; dielectric and final value remain subject to implementation review"
 TP11-TP17,7,Power and heater-driver test points,"+5V_SYS_GATE / Super Mini-side +5V_MCU and USB-VBUS tied node / OE / PWM input / Q1 gate / Q1 source / pre-switch +5V_MCU_FEED",BASE,"Required Phase 1 power-transition and gate-safety observations; TP17 exposes the isolated board-derived feed before SW1"
 U2,1,Controller module,"ESP32-S3 Super Mini, 2x9 edge pads",BASE,"Identity confirmed; pad numbering receiving-land geometry registration underside isolation antenna keepout USB access and flash size remain open"
-J6-J8,3,Thermistors,"10 k NTC, 1 m lead",BASE,Beta/coefficients TBD
-J9 + divider,1,Fourth thermistor,10 k NTC,DNP,Expansion
+J6-J8,3,Remote thermistors,"10 k NTC, 1 m lead",BASE,"T_OUTLET / T_CASE_EXTERNAL / T_CHAMBER; Beta/coefficients TBD"
+TH1/R16/R17/C8,1 channel,Onboard PCB temperature channel,"10 k NTC SMD + 10 k 0.1% pull-up + 1 k ADC series + 100 nF filter",BASE,"T_PCB; TH1 retains the legacy connector-shaped graphic pending native thermistor-symbol replacement; 0603 package provision is provisional; exact NTC MPN Beta tolerance temperature rating placement ADC/GPIO conversion constants and thresholds TBD"
 J10,1,Qwiic,JST-SH 1.0 mm 4-pin,BASE,Supported expansion
 F5,1,Qwiic protection,250 mA resettable fuse,BASE,Provisional
 JP1/JP2 + R18/R19,2,I2C pullups,4.7 k selectable,DNP/open,Populate only if required

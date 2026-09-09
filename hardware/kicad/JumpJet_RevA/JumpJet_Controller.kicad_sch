@@ -1339,7 +1339,7 @@
     (effects (font (size 0.85 0.85)) (justify left bottom))
     (uuid 85637bba-03d9-49d4-a80b-a2879daa7d47)
   )
-  (global_label "TEMP4_ADC_DNP" (shape bidirectional) (at 53.34 81.28 0) (fields_autoplaced)
+  (global_label "TEMP_PCB_ADC" (shape bidirectional) (at 53.34 81.28 0) (fields_autoplaced)
     (effects (font (size 0.85 0.85)) (justify left bottom))
     (uuid 88c060ab-29ef-43d9-8225-c59ac269bd88)
   )

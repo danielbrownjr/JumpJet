@@ -28,6 +28,11 @@ sheets in this directory. Project-local symbols and footprints resolve through
   solution for nodes already tied on the module.
 - `+5V_SYS_GATE` remains a separate 24-V-derived actuator rail. USB must have no
   path to that rail, the gate buffer supply, or heater actuation.
+- Rev A retains remote `T_CHAMBER`, `T_OUTLET`, and `T_CASE_EXTERNAL` sensing and
+  adds onboard `T_PCB` through the existing thermistor-front-end philosophy.
+  `T_PCB` placement, exact NTC characteristics, ADC/GPIO assignment, conversion
+  constants, and firmware thresholds remain blocked; it is not chamber sensing
+  and does not supersede `T_CASE_EXTERNAL` in Rev A.
 - `BOM_PRELIMINARY.csv` is archive context only. It contains placeholders and
   does not override statuses in
   [`docs/PHASE1_HARDWARE_REGISTER.md`](../../../docs/PHASE1_HARDWARE_REGISTER.md).
