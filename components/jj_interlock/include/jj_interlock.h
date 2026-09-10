@@ -36,8 +36,15 @@ typedef enum {
 typedef enum {
     JJ_FAULT_NONE = 0, JJ_FAULT_SENSOR, JJ_FAULT_OVERTEMPERATURE,
     JJ_FAULT_FAN, JJ_FAULT_NO_HEAT, JJ_FAULT_UNCONTROLLED_RISE,
-    JJ_FAULT_CONFIG,
+    JJ_FAULT_CONFIG, JJ_FAULT_STUCK_ON, JJ_FAULT_COMMANDED_OFF_PROOF,
+    JJ_FAULT_WATCHDOG_RESET, JJ_FAULT_UNEXPECTED_RESET,
+    JJ_FAULT_BROWNOUT_RESET,
 } jj_fault_t;
+typedef enum {
+    JJ_REMOTE_ACK_NEVER = 0,
+    JJ_REMOTE_ACK_WHEN_HEALTHY,
+    JJ_REMOTE_ACK_AFTER_REVALIDATION,
+} jj_remote_ack_policy_t;
 typedef enum {
     JJ_BLOCK_NONE = 0, JJ_BLOCK_OFF, JJ_BLOCK_NOT_COMMISSIONED,
     JJ_BLOCK_FAULT_LATCHED, JJ_BLOCK_PRINTER_UNAVAILABLE,
@@ -66,8 +73,11 @@ typedef struct {
     jj_sensor_sample_t outlet;
     jj_sensor_sample_t case_sensor;
     bool overtemperature_detected;
+    bool overtemperature_reset_proven;
     bool cooldown_required;
     bool fault_requires_thermal_management;
+    bool no_heat_revalidation_proven;
+    bool reset_revalidation_proven;
     jj_printer_sample_t printer;
     jj_fan_proof_t fan_proof;
 } jj_inputs_t;
@@ -88,7 +98,13 @@ jj_inputs_t jj_inputs_safe_defaults(void);
 void jj_interlock_init(jj_interlock_t *state);
 jj_outputs_t jj_interlock_step(jj_interlock_t *state, const jj_inputs_t *input);
 bool jj_interlock_clear_fault(jj_interlock_t *state, const jj_inputs_t *input);
+void jj_interlock_remove_remote_authorization(
+    jj_interlock_t *state,
+    jj_control_authority_t authority,
+    jj_control_inhibit_t inhibit,
+    jj_block_reason_t reason);
 jj_outputs_t jj_interlock_snapshot(const jj_interlock_t *state);
+jj_remote_ack_policy_t jj_fault_remote_ack_policy(jj_fault_t fault);
 const char *jj_fault_str(jj_fault_t fault);
 const char *jj_block_reason_str(jj_block_reason_t reason);
 const char *jj_control_authority_str(jj_control_authority_t authority);

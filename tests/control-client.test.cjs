@@ -10,6 +10,7 @@ const {
   ControlError,
   controllerLabel,
   constraintMessage,
+  mutationErrorMessage,
 } = require("../components/jj_portal/web/control-client.js");
 
 function state(generation, revision, leaseId) {
@@ -107,6 +108,25 @@ test("control loss disables mutation until reacquisition and refresh", async () 
   await assert.rejects(client.mutate("off"), error =>
     error.code === "control_authority_required");
   assert.equal(calls.length, 3);
+});
+
+test("revision conflict adopts authoritative state without claiming original failure", async () => {
+  const calls = [];
+  const conflict = {...state(2, 7, "a".repeat(32)), mode: "off"};
+  const fetch = scriptedFetch([
+    response(state(2, 2, "a".repeat(32))),
+    response(state(2, 3, "a".repeat(32))),
+    response({error: "state_revision_conflict", state: conflict}, false),
+  ], calls);
+  const client = new Client({fetch, owner: "phone"});
+  await client.resume(false);
+  await assert.rejects(client.mutate("manual", 45), error =>
+    error instanceof ControlError && error.code === "state_revision_conflict");
+  assert.equal(client.ready, true);
+  assert.equal(client.revision, 7);
+  assert.equal(client.state.mode, "off");
+  assert.match(mutationErrorMessage("state_revision_conflict"),
+               /earlier request may have completed/);
 });
 
 test("late mutation response from an older generation cannot replace current state", async () => {

@@ -89,7 +89,7 @@ static void test_manual_expiry_fails_cold_without_fault_and_keeps_cooldown(void)
 {
     jj_authority_t authority;
     jj_interlock_t interlock;
-    jj_authority_init(&authority, 1000);
+    jj_authority_init(&authority, &interlock, 1000);
     jj_interlock_init(&interlock);
     jj_inputs_t inputs = nominal_inputs();
     jj_control_snapshot_t lease = acquire(&authority, LEASE_A, "phone-a", false, 0);
@@ -100,14 +100,21 @@ static void test_manual_expiry_fails_cold_without_fault_and_keeps_cooldown(void)
     CHECK(evaluate(&interlock, &manual, inputs).heater_requested);
 
     CHECK(jj_authority_tick(&authority, 1000));
+    jj_outputs_t output = jj_interlock_snapshot(&interlock);
+    CHECK(!output.heater_requested);
+    CHECK(output.thermal_state == JJ_THERMAL_COOLDOWN);
     jj_control_snapshot_t expired;
     jj_authority_snapshot(&authority, 1000, &expired);
     CHECK(expired.mode == JJ_MODE_MANUAL);
     CHECK(expired.active_authority == JJ_AUTHORITY_NONE);
     CHECK(expired.control_inhibit == JJ_CONTROL_INHIBIT_NO_AUTHORITY);
     CHECK(!expired.manual_demand_authorized);
+    CHECK(expired.last_control_loss_reason ==
+          JJ_CONTROL_LOSS_REMOTE_LEASE_EXPIRED);
+    CHECK(strcmp(jj_control_loss_reason_str(expired.last_control_loss_reason),
+                 "remote_lease_expired") == 0);
     inputs.cooldown_required = true;
-    jj_outputs_t output = evaluate(&interlock, &expired, inputs);
+    output = evaluate(&interlock, &expired, inputs);
     CHECK(!output.heater_requested);
     CHECK(output.fault == JJ_FAULT_NONE);
     CHECK(output.control_inhibit == JJ_CONTROL_INHIBIT_NO_AUTHORITY);
@@ -119,7 +126,7 @@ static void test_reacquire_requires_refresh_and_new_explicit_request(void)
 {
     jj_authority_t authority;
     jj_interlock_t interlock;
-    jj_authority_init(&authority, 1000);
+    jj_authority_init(&authority, &interlock, 1000);
     jj_interlock_init(&interlock);
     jj_inputs_t inputs = nominal_inputs();
     jj_control_snapshot_t first = acquire(&authority, LEASE_A, "phone", false, 0);
@@ -165,7 +172,7 @@ static void test_stale_generation_and_revision_are_atomic(void)
 {
     jj_authority_t authority;
     jj_interlock_t interlock;
-    jj_authority_init(&authority, 1000);
+    jj_authority_init(&authority, &interlock, 1000);
     jj_interlock_init(&interlock);
     jj_inputs_t inputs = nominal_inputs();
     jj_control_snapshot_t lease = acquire(&authority, LEASE_A, "phone", false, 0);
@@ -195,13 +202,14 @@ static void test_explicit_takeover_revokes_old_remote_demand(void)
 {
     jj_authority_t authority;
     jj_interlock_t interlock;
-    jj_authority_init(&authority, 1000);
+    jj_authority_init(&authority, &interlock, 1000);
     jj_interlock_init(&interlock);
     jj_inputs_t inputs = nominal_inputs();
     jj_control_snapshot_t first = acquire(&authority, LEASE_A, "phone-a", false, 0);
     first = refresh(&authority, &first, 0);
     first = mutate(&authority, &interlock, &first, JJ_MUTATION_MANUAL, 45.0f,
                    "manual-a", &inputs, 1);
+    CHECK(evaluate(&interlock, &first, inputs).heater_requested);
 
     jj_control_acquire_t denied = {.takeover = false};
     snprintf(denied.lease_id, sizeof denied.lease_id, "%s", LEASE_B);
@@ -216,6 +224,11 @@ static void test_explicit_takeover_revokes_old_remote_demand(void)
     CHECK(takeover.generation > first.generation);
     CHECK(!takeover.manual_demand_authorized);
     CHECK(takeover.active_authority == JJ_AUTHORITY_REACQUIRING);
+    CHECK(takeover.last_control_loss_reason ==
+          JJ_CONTROL_LOSS_EXPLICIT_TAKEOVER);
+    CHECK(strcmp(jj_control_loss_reason_str(takeover.last_control_loss_reason),
+                 "explicit_takeover") == 0);
+    CHECK(!jj_interlock_snapshot(&interlock).heater_requested);
     CHECK(!evaluate(&interlock, &takeover, inputs).heater_requested);
     jj_control_snapshot_t heartbeat;
     CHECK(jj_authority_heartbeat(&authority, LEASE_A, first.generation, 4,
@@ -226,7 +239,7 @@ static void test_automatic_survives_browser_loss_but_eligibility_fails_cold(void
 {
     jj_authority_t authority;
     jj_interlock_t interlock;
-    jj_authority_init(&authority, 1000);
+    jj_authority_init(&authority, &interlock, 1000);
     jj_interlock_init(&interlock);
     jj_inputs_t inputs = nominal_inputs();
     inputs.automatic_target_available = true;
@@ -272,7 +285,7 @@ static void test_automatic_transition_requires_current_product_eligibility(void)
 {
     jj_authority_t authority;
     jj_interlock_t interlock;
-    jj_authority_init(&authority, 1000);
+    jj_authority_init(&authority, &interlock, 1000);
     jj_interlock_init(&interlock);
     jj_inputs_t inputs = nominal_inputs();
     jj_control_snapshot_t lease = acquire(&authority, LEASE_A, "phone", false, 0);
@@ -300,7 +313,7 @@ static void test_faults_are_not_cleared_by_authority_and_client_cannot_bypass(vo
 {
     jj_authority_t authority;
     jj_interlock_t interlock;
-    jj_authority_init(&authority, 1000);
+    jj_authority_init(&authority, &interlock, 1000);
     jj_interlock_init(&interlock);
     jj_inputs_t inputs = nominal_inputs();
     jj_inputs_t faulted = inputs;
@@ -338,7 +351,7 @@ static void test_request_uuid_retry_is_exactly_once_and_content_bound(void)
 {
     jj_authority_t authority;
     jj_interlock_t interlock;
-    jj_authority_init(&authority, 1000);
+    jj_authority_init(&authority, &interlock, 1000);
     jj_interlock_init(&interlock);
     jj_inputs_t inputs = nominal_inputs();
     jj_control_snapshot_t lease = acquire(&authority, LEASE_A, "phone", false, 0);
@@ -381,7 +394,7 @@ static void test_retry_after_expiry_never_replays_historical_manual_demand(void)
 {
     jj_authority_t authority;
     jj_interlock_t interlock;
-    jj_authority_init(&authority, 1000);
+    jj_authority_init(&authority, &interlock, 1000);
     jj_interlock_init(&interlock);
     jj_inputs_t inputs = nominal_inputs();
     jj_control_snapshot_t lease = acquire(&authority, LEASE_A, "phone", false, 0);
@@ -407,6 +420,140 @@ static void test_retry_after_expiry_never_replays_historical_manual_demand(void)
     CHECK(!evaluate(&interlock, &retry, inputs).heater_requested);
 }
 
+static void test_directional_authority_sampling(void)
+{
+    jj_authority_t authority;
+    jj_interlock_t interlock;
+    jj_authority_init(&authority, &interlock, 1000);
+    jj_interlock_init(&interlock);
+    jj_inputs_t cached_prusa_inputs = nominal_inputs();
+    jj_control_snapshot_t lease = acquire(&authority, LEASE_A, "phone-a", false, 0);
+    lease = refresh(&authority, &lease, 0);
+    jj_control_snapshot_t manual = mutate(
+        &authority, &interlock, &lease, JJ_MUTATION_MANUAL, 45.0f,
+        "directional-manual", &cached_prusa_inputs, 1);
+
+    /* Grants do not rewrite the current interlock decision. */
+    CHECK(!jj_interlock_snapshot(&interlock).heater_requested);
+    CHECK(jj_authority_control_step(
+        &authority, &cached_prusa_inputs, 2, &manual).heater_requested);
+
+    /* A takeover after the cached Prusa read revokes that decision now. */
+    jj_control_snapshot_t takeover = acquire(
+        &authority, LEASE_B, "phone-b", true, 3);
+    CHECK(!takeover.manual_demand_authorized);
+    CHECK(!jj_interlock_snapshot(&interlock).heater_requested);
+    CHECK(!jj_authority_control_step(
+        &authority, &cached_prusa_inputs, 3, NULL).heater_requested);
+
+    takeover = refresh(&authority, &takeover, 4);
+    jj_control_snapshot_t second_manual = mutate(
+        &authority, &interlock, &takeover, JJ_MUTATION_MANUAL, 45.0f,
+        "directional-second-manual", &cached_prusa_inputs, 5);
+    CHECK(!jj_interlock_snapshot(&interlock).heater_requested);
+    CHECK(jj_authority_control_step(
+        &authority, &cached_prusa_inputs, 5, NULL).heater_requested);
+
+    jj_control_snapshot_t reacquiring = acquire(
+        &authority, LEASE_A, "phone-b", false, 6);
+    CHECK(reacquiring.last_control_loss_reason ==
+          JJ_CONTROL_LOSS_REMOTE_REACQUIRED);
+    CHECK(strcmp(jj_control_loss_reason_str(
+                     reacquiring.last_control_loss_reason),
+                 "remote_reacquired") == 0);
+    CHECK(!jj_interlock_snapshot(&interlock).heater_requested);
+
+    reacquiring = refresh(&authority, &reacquiring, 7);
+    second_manual = mutate(
+        &authority, &interlock, &reacquiring, JJ_MUTATION_MANUAL, 45.0f,
+        "directional-third-manual", &cached_prusa_inputs, 8);
+    CHECK(jj_authority_control_step(
+        &authority, &cached_prusa_inputs, 8, NULL).heater_requested);
+    jj_control_snapshot_t off = mutate(
+        &authority, &interlock, &second_manual, JJ_MUTATION_OFF, 0.0f,
+        "directional-off", &cached_prusa_inputs, 9);
+    CHECK(off.mode == JJ_MODE_OFF);
+    CHECK(!jj_interlock_snapshot(&interlock).heater_requested);
+}
+
+static void test_evicted_retry_reports_revision_conflict_with_current_state(void)
+{
+    jj_authority_t authority;
+    jj_interlock_t interlock;
+    jj_authority_init(&authority, &interlock, 10000);
+    jj_interlock_init(&interlock);
+    jj_inputs_t inputs = nominal_inputs();
+    jj_control_snapshot_t lease = acquire(&authority, LEASE_A, "phone", false, 0);
+    lease = refresh(&authority, &lease, 0);
+    jj_control_mutation_t original = {
+        .generation = lease.generation,
+        .expected_revision = lease.revision,
+        .kind = JJ_MUTATION_MANUAL,
+        .target_c = 45.0f,
+    };
+    snprintf(original.lease_id, sizeof original.lease_id, "%s", LEASE_A);
+    snprintf(original.request_id, sizeof original.request_id, "%s", "original");
+    jj_control_snapshot_t current;
+    CHECK(jj_authority_mutate(&authority, &interlock, &original, &inputs, 1,
+                              &current) == JJ_CONTROL_OK);
+
+    for (size_t i = 0; i < JJ_CONTROL_REQUEST_CACHE_SIZE; ++i) {
+        jj_control_mutation_t next = {
+            .generation = current.generation,
+            .expected_revision = current.revision,
+            .kind = i % 2 == 0 ? JJ_MUTATION_OFF : JJ_MUTATION_MANUAL,
+            .target_c = 45.0f,
+        };
+        snprintf(next.lease_id, sizeof next.lease_id, "%s", LEASE_A);
+        snprintf(next.request_id, sizeof next.request_id, "evict-%zu", i);
+        CHECK(jj_authority_mutate(&authority, &interlock, &next, &inputs,
+                                  2 + i, &current) == JJ_CONTROL_OK);
+    }
+
+    jj_control_snapshot_t retry_state;
+    CHECK(jj_authority_mutate(&authority, &interlock, &original, &inputs, 20,
+                              &retry_state) == JJ_CONTROL_REVISION_CONFLICT);
+    CHECK(retry_state.revision == current.revision);
+    CHECK(retry_state.mode == current.mode);
+}
+
+static void test_remote_clear_obeys_fault_class_policy(void)
+{
+    jj_authority_t authority;
+    jj_interlock_t interlock;
+    jj_authority_init(&authority, &interlock, 1000);
+    jj_interlock_init(&interlock);
+    jj_inputs_t inputs = nominal_inputs();
+    jj_control_snapshot_t lease = acquire(&authority, LEASE_A, "phone", false, 0);
+    lease = refresh(&authority, &lease, 0);
+    jj_control_mutation_t clear = {
+        .generation = lease.generation,
+        .expected_revision = lease.revision,
+        .kind = JJ_MUTATION_CLEAR_FAULT,
+    };
+    snprintf(clear.lease_id, sizeof clear.lease_id, "%s", LEASE_A);
+
+    interlock.fault_latched = JJ_FAULT_FAN;
+    inputs.fan_proof = JJ_FAN_PROOF_PENDING;
+    jj_control_snapshot_t result;
+    CHECK(jj_authority_mutate(&authority, &interlock, &clear, &inputs, 1,
+                              &result) == JJ_CONTROL_HARDWARE_FAULT);
+    CHECK(interlock.fault_latched == JJ_FAULT_FAN);
+    inputs.fan_proof = JJ_FAN_PROOF_PROVEN;
+    CHECK(jj_authority_mutate(&authority, &interlock, &clear, &inputs, 2,
+                              &result) == JJ_CONTROL_OK);
+    CHECK(interlock.fault_latched == JJ_FAULT_NONE);
+
+    interlock.fault_latched = JJ_FAULT_UNCONTROLLED_RISE;
+    clear.expected_revision = result.revision;
+    inputs.overtemperature_reset_proven = true;
+    inputs.no_heat_revalidation_proven = true;
+    inputs.reset_revalidation_proven = true;
+    CHECK(jj_authority_mutate(&authority, &interlock, &clear, &inputs, 3,
+                              &result) == JJ_CONTROL_HARDWARE_FAULT);
+    CHECK(interlock.fault_latched == JJ_FAULT_UNCONTROLLED_RISE);
+}
+
 int main(void)
 {
     test_manual_expiry_fails_cold_without_fault_and_keeps_cooldown();
@@ -418,6 +565,9 @@ int main(void)
     test_faults_are_not_cleared_by_authority_and_client_cannot_bypass();
     test_request_uuid_retry_is_exactly_once_and_content_bound();
     test_retry_after_expiry_never_replays_historical_manual_demand();
+    test_directional_authority_sampling();
+    test_evicted_retry_reports_revision_conflict_with_current_state();
+    test_remote_clear_obeys_fault_class_policy();
     puts("jj_authority_host_test: PASS");
     return 0;
 }

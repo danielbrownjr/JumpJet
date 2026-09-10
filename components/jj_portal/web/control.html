@@ -117,7 +117,7 @@
       await client.mutate(button.dataset.action, target);
       $("message").textContent = "Server accepted the complete request.";
     } catch (error) {
-      $("message").textContent = "Request rejected: " + error.code;
+      $("message").textContent = JumpJetControl.mutationErrorMessage(error.code);
     }
   }));
   $("takeover").addEventListener("click", () => {

@@ -33,6 +33,8 @@ behavior.
 
 On foreground/resume the browser discards its authority assumption and repeats
 acquire plus refresh. Reconnection never restores a prior MANUAL request.
+Internally, the last-loss reason is a typed enum; its stable wire mappings remain
+`remote_lease_expired`, `explicit_takeover`, and `remote_reacquired`.
 
 ## Atomic mutations
 
@@ -53,6 +55,13 @@ cached in a bounded eight-entry window; an identical retry returns its original
 result with current authoritative state, while reuse with different content
 returns `control_request_conflict`. Historical state is never replayed as live
 control demand.
+
+The cache is deliberately bounded. Once an entry has been evicted, a retry is a
+newly evaluated request and may return `state_revision_conflict` even when the
+original request committed. That response means “refresh authoritative state
+and determine the current result”; it does not prove that the original mutation
+failed. The browser accepts the returned authoritative state before surfacing
+the conflict.
 
 Stable machine-readable failures are:
 
@@ -86,3 +95,22 @@ diagnostics for tooling and troubleshooting.
 All control POST bodies must use `application/json`. General state GET responses
 never disclose the opaque lease ID. The dedicated control page receives it only
 from successful lease-bound responses.
+
+## Control-step ordering and directional revocation
+
+The control task reads `dc_prusa`'s cached status before sampling authority:
+
+`cached Prusa status -> expire/sample authority -> apply authority -> interlock`
+
+`dc_prusa_get_status()` does not perform network I/O, but it uses a mutex wait
+with no formal finite bound. Sampling authority after that wait prevents it from
+inflating the authority-sample-to-decision interval. No authority critical
+section spans the cached-status read or any network operation.
+
+The safety invariant is directional, not a nominal loop-time promise. Lease
+expiry, takeover, reacquisition, and OFF synchronously remove the current
+logical REMOTE heater authorization and preserve any autonomous cooldown/fan
+request. A new authority or Manual demand changes control state but does not
+create interlock permission until the next authoritative control step. The
+authority sample and interlock decision use the fixed lock order authority then
+interlock; interlock code never calls back into authority.

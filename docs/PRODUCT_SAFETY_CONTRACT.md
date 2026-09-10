@@ -52,6 +52,24 @@ the server commits the complete request or nothing. Stable failures are
 `control_request_ineligible`, `control_request_conflict`, and
 `hardware_fault_latched`. Reacquisition never acknowledges a real fault.
 
+Remote acknowledgement is fault-class policy, not a blanket capability:
+
+| Fault class | Remote acknowledgement | Required authoritative evidence |
+|---|---|---|
+| sensor | `WHEN_HEALTHY` | Every required sensor reports a finite, valid, plausible sample with no open, short, or implausible status |
+| overtemperature | `AFTER_REVALIDATION` | Firmware-proven reset condition below the validated hysteretic reset threshold, cooldown complete, and no fault thermal-management request |
+| fan | `AFTER_REVALIDATION` | Actual fan/airflow proof is `PROVEN`; command alone is never proof |
+| no heat | `AFTER_REVALIDATION` | Valid sensors, proven fan/airflow, heater OFF during recovery, and a completed fault-specific sanity sequence |
+| uncontrolled rise | `NEVER` | Treated as suspected stuck-on behavior; ordinary remote clear is prohibited |
+| configuration | `NEVER` | Configuration correction plus a service/reinitialization path |
+
+Stuck-on and commanded-OFF proof failures are separately reserved as `NEVER`.
+Watchdog, unexpected/panic-reset, and brownout classes are separately reserved
+as `AFTER_REVALIDATION`. Every new or unknown class defaults to `NEVER` until
+reviewed. The browser can request acknowledgement but cannot provide any proof
+bit. Hardware-dependent reset thresholds and proof procedures remain explicit
+validation gates; their absence leaves the affected fault non-clearable.
+
 ## AUTOMATIC and PrusaLink
 
 `dc_prusa` is read-only and owns status freshness. Jump Jet consumes its existing

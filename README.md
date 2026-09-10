@@ -73,6 +73,7 @@ fault-injection evidence. The browser and API are never the safety boundary.
 ./tests/run_interlock_host_test.sh
 ./tests/run_authority_host_test.sh
 node --test tests/control-client.test.cjs
+sh tests/check_control_safety_contract.sh
 sh tests/check_identity_contract.sh
 sh tests/check_api_contract.sh
 sh tests/check_actuation_allowlist.sh

@@ -34,11 +34,6 @@ static void control_task(void *arg)
     jj_block_reason_t previous = JJ_BLOCK_NONE;
     for (;;) {
         jj_inputs_t input = jj_inputs_safe_defaults();
-        const uint64_t now_ms = (uint64_t)esp_timer_get_time() / 1000U;
-        (void)jj_authority_tick(&s_authority, now_ms);
-        jj_control_snapshot_t authority;
-        jj_authority_snapshot(&s_authority, now_ms, &authority);
-        jj_authority_apply_to_inputs(&authority, &input);
         dc_prusa_status_t printer = {0};
         if (dc_prusa_get_status(&printer) == ESP_OK) {
             input.printer.online = printer.online;
@@ -47,7 +42,13 @@ static void control_task(void *arg)
             // dc_prusa has already applied its authoritative 15-second
             // freshness rule. Jump Jet deliberately has no second timer.
         }
-        const jj_outputs_t output = jj_interlock_step(&s_interlock, &input);
+        /*
+         * Cached Prusa status is read before authority. The final authority
+         * sample and interlock decision are one short, ordered control step.
+         */
+        const uint64_t now_ms = (uint64_t)esp_timer_get_time() / 1000U;
+        const jj_outputs_t output = jj_authority_control_step(
+            &s_authority, &input, now_ms, NULL);
         if (!startup_reported) {
             startup_reported = true;
             xTaskNotifyGive(startup_task);
@@ -73,7 +74,7 @@ void app_main(void)
     }
     ESP_ERROR_CHECK(err);
     jj_interlock_init(&s_interlock);
-    jj_authority_init(&s_authority, JJ_REMOTE_LEASE_TTL_MS);
+    jj_authority_init(&s_authority, &s_interlock, JJ_REMOTE_LEASE_TTL_MS);
     BaseType_t created = xTaskCreate(control_task, "jj_control", 4096,
                                      xTaskGetCurrentTaskHandle(), 8, NULL);
     ESP_ERROR_CHECK(created == pdPASS ? ESP_OK : ESP_ERR_NO_MEM);

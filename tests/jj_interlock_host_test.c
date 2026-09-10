@@ -173,6 +173,80 @@ static void test_fan_proof_and_null_inputs_fail_cold(void)
     check_cold(jj_interlock_step(&state, NULL), JJ_BLOCK_FAULT_LATCHED);
 }
 
+static void test_remote_fault_acknowledgement_policy(void)
+{
+    CHECK(jj_fault_remote_ack_policy(JJ_FAULT_SENSOR) ==
+          JJ_REMOTE_ACK_WHEN_HEALTHY);
+    CHECK(jj_fault_remote_ack_policy(JJ_FAULT_OVERTEMPERATURE) ==
+          JJ_REMOTE_ACK_AFTER_REVALIDATION);
+    CHECK(jj_fault_remote_ack_policy(JJ_FAULT_FAN) ==
+          JJ_REMOTE_ACK_AFTER_REVALIDATION);
+    CHECK(jj_fault_remote_ack_policy(JJ_FAULT_NO_HEAT) ==
+          JJ_REMOTE_ACK_AFTER_REVALIDATION);
+    CHECK(jj_fault_remote_ack_policy(JJ_FAULT_WATCHDOG_RESET) ==
+          JJ_REMOTE_ACK_AFTER_REVALIDATION);
+    CHECK(jj_fault_remote_ack_policy(JJ_FAULT_UNEXPECTED_RESET) ==
+          JJ_REMOTE_ACK_AFTER_REVALIDATION);
+    CHECK(jj_fault_remote_ack_policy(JJ_FAULT_BROWNOUT_RESET) ==
+          JJ_REMOTE_ACK_AFTER_REVALIDATION);
+    CHECK(jj_fault_remote_ack_policy(JJ_FAULT_UNCONTROLLED_RISE) ==
+          JJ_REMOTE_ACK_NEVER);
+    CHECK(jj_fault_remote_ack_policy(JJ_FAULT_CONFIG) == JJ_REMOTE_ACK_NEVER);
+    CHECK(jj_fault_remote_ack_policy(JJ_FAULT_STUCK_ON) == JJ_REMOTE_ACK_NEVER);
+    CHECK(jj_fault_remote_ack_policy(JJ_FAULT_COMMANDED_OFF_PROOF) ==
+          JJ_REMOTE_ACK_NEVER);
+    CHECK(jj_fault_remote_ack_policy((jj_fault_t)999) == JJ_REMOTE_ACK_NEVER);
+
+    jj_interlock_t state;
+    jj_interlock_init(&state);
+    jj_inputs_t input = nominal(JJ_MODE_OFF);
+
+    state.fault_latched = JJ_FAULT_SENSOR;
+    CHECK(jj_interlock_clear_fault(&state, &input));
+
+    state.fault_latched = JJ_FAULT_SENSOR;
+    input.chamber.status = JJ_SENSOR_IMPLAUSIBLE;
+    CHECK(!jj_interlock_clear_fault(&state, &input));
+    input.chamber.status = JJ_SENSOR_OPEN;
+    CHECK(!jj_interlock_clear_fault(&state, &input));
+    input.chamber.status = JJ_SENSOR_SHORT;
+    CHECK(!jj_interlock_clear_fault(&state, &input));
+    input.chamber.status = JJ_SENSOR_OK;
+    input.chamber.temperature_c = NAN;
+    CHECK(!jj_interlock_clear_fault(&state, &input));
+    input.chamber.temperature_c = 30.0f;
+
+    state.fault_latched = JJ_FAULT_FAN;
+    input.fan_proof = JJ_FAN_PROOF_PENDING;
+    CHECK(!jj_interlock_clear_fault(&state, &input));
+    input.fan_proof = JJ_FAN_PROOF_PROVEN;
+    CHECK(jj_interlock_clear_fault(&state, &input));
+
+    state.fault_latched = JJ_FAULT_OVERTEMPERATURE;
+    CHECK(!jj_interlock_clear_fault(&state, &input));
+    input.overtemperature_reset_proven = true;
+    input.cooldown_required = true;
+    CHECK(!jj_interlock_clear_fault(&state, &input));
+    input.cooldown_required = false;
+    CHECK(jj_interlock_clear_fault(&state, &input));
+
+    state.fault_latched = JJ_FAULT_NO_HEAT;
+    CHECK(!jj_interlock_clear_fault(&state, &input));
+    input.no_heat_revalidation_proven = true;
+    CHECK(jj_interlock_clear_fault(&state, &input));
+
+    state.fault_latched = JJ_FAULT_UNCONTROLLED_RISE;
+    input.reset_revalidation_proven = true;
+    CHECK(!jj_interlock_clear_fault(&state, &input));
+    state.fault_latched = JJ_FAULT_CONFIG;
+    CHECK(!jj_interlock_clear_fault(&state, &input));
+    state.fault_latched = (jj_fault_t)999;
+    CHECK(!jj_interlock_clear_fault(&state, &input));
+
+    state.fault_latched = JJ_FAULT_WATCHDOG_RESET;
+    CHECK(jj_interlock_clear_fault(&state, &input));
+}
+
 int main(void)
 {
     test_boot_defaults_and_modes();
@@ -182,6 +256,7 @@ int main(void)
     test_faults_latch_and_need_explicit_safe_clear();
     test_off_keeps_thermal_management_request();
     test_fan_proof_and_null_inputs_fail_cold();
+    test_remote_fault_acknowledgement_policy();
     puts("jj_interlock_host_test: PASS");
     return 0;
 }

@@ -214,7 +214,8 @@ static cJSON *control_state_json(
         cJSON_AddNumberToObject(control, "last_loss_monotonic_ms",
                                (double)authority->last_control_loss_ms);
         cJSON_AddStringToObject(control, "last_loss_reason",
-                               authority->last_control_loss_reason);
+                               jj_control_loss_reason_str(
+                                   authority->last_control_loss_reason));
     }
     cJSON_AddNumberToObject(root, "configured_target_c",
                            authority->configured_target_c);
@@ -263,16 +264,6 @@ static cJSON *control_state_json(
     return root;
 }
 
-static void evaluate_state(
-    const jj_control_snapshot_t *authority,
-    const dc_prusa_status_t *printer,
-    jj_outputs_t *output)
-{
-    jj_inputs_t input = authoritative_inputs(printer);
-    jj_authority_apply_to_inputs(authority, &input);
-    *output = jj_interlock_step(s_interlock, &input);
-}
-
 static esp_err_t state_get(httpd_req_t *req)
 {
     const uint64_t now_ms = monotonic_ms();
@@ -281,8 +272,7 @@ static esp_err_t state_get(httpd_req_t *req)
     jj_authority_snapshot(s_authority, now_ms, &authority);
     dc_prusa_status_t printer = {0};
     (void)dc_prusa_get_status(&printer);
-    jj_outputs_t output;
-    evaluate_state(&authority, &printer, &output);
+    const jj_outputs_t output = jj_interlock_snapshot(s_interlock);
     return send_json(req, control_state_json(
         &authority, &output, &printer, false));
 }
@@ -329,8 +319,7 @@ static esp_err_t send_control_result(
 {
     dc_prusa_status_t printer = {0};
     (void)dc_prusa_get_status(&printer);
-    jj_outputs_t output;
-    evaluate_state(authority, &printer, &output);
+    const jj_outputs_t output = jj_interlock_snapshot(s_interlock);
     cJSON *state = control_state_json(
         authority, &output, &printer, include_lease_id);
     if (result != JJ_CONTROL_OK)

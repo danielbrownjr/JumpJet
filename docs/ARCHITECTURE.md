@@ -66,6 +66,21 @@ fault thermal management, and authoritative overtemperature detection without
 inventing GPIOs or temperature thresholds. The production image has no physical
 output path, so API delivery remains zero/unavailable.
 
+The control task is the sole production owner of ordinary interlock evaluation.
+It first copies the independently polled, cached PrusaLink status, then performs
+authority expiry/sampling, authority input application, and the final interlock
+decision as one short ordered control step. The cached-status getter may wait on
+its own mutex and therefore runs before authority is sampled; neither it nor any
+network work runs under the authority `portMUX`.
+
+Authorization removal is directional and synchronous. Expiry, takeover,
+reacquisition, and OFF immediately cold the current logical REMOTE decision,
+without discarding cooldown/fan-afterrun state. Grants remain inert until the
+next control step. Authority-to-interlock nesting always locks authority first;
+interlock code never acquires authority. Authority critical sections contain
+only bounded state checks/copies, the eight-entry cache scan, and short
+interlock operations—no logging, formatted I/O, allocation, or blocking calls.
+
 ## OTA invariant
 
 The portal rejects OTA when heat is requested or active thermal management is

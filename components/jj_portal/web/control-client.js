@@ -52,6 +52,12 @@
     return messages[code] || "Heating inhibited: see advanced diagnostics";
   }
 
+  function mutationErrorMessage(code) {
+    if (code === "state_revision_conflict")
+      return "Authoritative state changed. Refresh and verify the current result; the earlier request may have completed.";
+    return "Request rejected: " + code;
+  }
+
   class Client {
     constructor(options) {
       this.fetch = options.fetch;
@@ -193,5 +199,6 @@
     CONTROL_LOSS_ERRORS,
     controllerLabel,
     constraintMessage,
+    mutationErrorMessage,
   };
 });

@@ -178,6 +178,36 @@ static bool clear_fault_unlocked(jj_interlock_t *state, const jj_inputs_t *input
         input->overtemperature_detected || input->cooldown_required ||
         input->fault_requires_thermal_management)
         return false;
+    if (jj_fault_remote_ack_policy(state->fault_latched) ==
+        JJ_REMOTE_ACK_NEVER)
+        return false;
+    switch (state->fault_latched) {
+    case JJ_FAULT_SENSOR:
+        break;
+    case JJ_FAULT_OVERTEMPERATURE:
+        if (!input->overtemperature_reset_proven) return false;
+        break;
+    case JJ_FAULT_FAN:
+        if (input->fan_proof != JJ_FAN_PROOF_PROVEN) return false;
+        break;
+    case JJ_FAULT_NO_HEAT:
+        if (input->fan_proof != JJ_FAN_PROOF_PROVEN ||
+            !input->no_heat_revalidation_proven)
+            return false;
+        break;
+    case JJ_FAULT_WATCHDOG_RESET:
+    case JJ_FAULT_UNEXPECTED_RESET:
+    case JJ_FAULT_BROWNOUT_RESET:
+        if (!input->reset_revalidation_proven) return false;
+        break;
+    case JJ_FAULT_NONE:
+    case JJ_FAULT_UNCONTROLLED_RISE:
+    case JJ_FAULT_CONFIG:
+    case JJ_FAULT_STUCK_ON:
+    case JJ_FAULT_COMMANDED_OFF_PROOF:
+    default:
+        return false;
+    }
     state->fault_latched = JJ_FAULT_NONE;
     state->last_output = (jj_outputs_t){.block_reason = JJ_BLOCK_OFF};
     return true;
@@ -190,6 +220,26 @@ bool jj_interlock_clear_fault(jj_interlock_t *state, const jj_inputs_t *input)
     bool cleared = clear_fault_unlocked(state, input);
     STATE_UNLOCK();
     return cleared;
+}
+
+void jj_interlock_remove_remote_authorization(
+    jj_interlock_t *state,
+    jj_control_authority_t authority,
+    jj_control_inhibit_t inhibit,
+    jj_block_reason_t reason)
+{
+    if (!state) return;
+    STATE_LOCK();
+    state->last_output.heater_requested = false;
+    state->last_output.effective_target_c = 0.0f;
+    state->last_output.active_authority = authority;
+    state->last_output.control_inhibit = inhibit;
+    state->last_output.block_reason = reason;
+    if (state->last_output.thermal_management_required)
+        state->last_output.thermal_state = JJ_THERMAL_COOLDOWN;
+    else
+        state->last_output.thermal_state = JJ_THERMAL_IDLE;
+    STATE_UNLOCK();
 }
 
 jj_outputs_t jj_interlock_snapshot(const jj_interlock_t *state)
@@ -213,7 +263,34 @@ const char *jj_fault_str(jj_fault_t fault)
     case JJ_FAULT_NO_HEAT: return "no_heat";
     case JJ_FAULT_UNCONTROLLED_RISE: return "uncontrolled_rise";
     case JJ_FAULT_CONFIG: return "config";
+    case JJ_FAULT_STUCK_ON: return "stuck_on";
+    case JJ_FAULT_COMMANDED_OFF_PROOF: return "commanded_off_proof";
+    case JJ_FAULT_WATCHDOG_RESET: return "watchdog_reset";
+    case JJ_FAULT_UNEXPECTED_RESET: return "unexpected_reset";
+    case JJ_FAULT_BROWNOUT_RESET: return "brownout_reset";
     default: return "unknown";
+    }
+}
+
+jj_remote_ack_policy_t jj_fault_remote_ack_policy(jj_fault_t fault)
+{
+    switch (fault) {
+    case JJ_FAULT_SENSOR:
+        return JJ_REMOTE_ACK_WHEN_HEALTHY;
+    case JJ_FAULT_OVERTEMPERATURE:
+    case JJ_FAULT_FAN:
+    case JJ_FAULT_NO_HEAT:
+    case JJ_FAULT_WATCHDOG_RESET:
+    case JJ_FAULT_UNEXPECTED_RESET:
+    case JJ_FAULT_BROWNOUT_RESET:
+        return JJ_REMOTE_ACK_AFTER_REVALIDATION;
+    case JJ_FAULT_NONE:
+    case JJ_FAULT_UNCONTROLLED_RISE:
+    case JJ_FAULT_CONFIG:
+    case JJ_FAULT_STUCK_ON:
+    case JJ_FAULT_COMMANDED_OFF_PROOF:
+    default:
+        return JJ_REMOTE_ACK_NEVER;
     }
 }
 

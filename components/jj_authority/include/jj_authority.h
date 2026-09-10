@@ -30,6 +30,13 @@ typedef enum {
     JJ_MUTATION_CLEAR_FAULT,
 } jj_control_mutation_kind_t;
 
+typedef enum {
+    JJ_CONTROL_LOSS_NONE = 0,
+    JJ_CONTROL_LOSS_REMOTE_LEASE_EXPIRED,
+    JJ_CONTROL_LOSS_EXPLICIT_TAKEOVER,
+    JJ_CONTROL_LOSS_REMOTE_REACQUIRED,
+} jj_control_loss_reason_t;
+
 typedef struct {
     char lease_id[JJ_CONTROL_LEASE_ID_LEN + 1];
     char owner[JJ_CONTROL_OWNER_LEN + 1];
@@ -58,7 +65,7 @@ typedef struct {
     char lease_owner[JJ_CONTROL_OWNER_LEN + 1];
     uint32_t lease_expires_in_ms;
     uint64_t last_control_loss_ms;
-    char last_control_loss_reason[32];
+    jj_control_loss_reason_t last_control_loss_reason;
 } jj_control_snapshot_t;
 
 typedef struct {
@@ -71,11 +78,15 @@ typedef struct {
     jj_control_snapshot_t state;
     uint64_t lease_deadline_ms;
     uint32_t lease_ttl_ms;
+    jj_interlock_t *interlock;
     jj_control_request_cache_entry_t request_cache[JJ_CONTROL_REQUEST_CACHE_SIZE];
     uint8_t next_request_cache_entry;
 } jj_authority_t;
 
-void jj_authority_init(jj_authority_t *state, uint32_t lease_ttl_ms);
+void jj_authority_init(
+    jj_authority_t *state,
+    jj_interlock_t *interlock,
+    uint32_t lease_ttl_ms);
 jj_control_result_t jj_authority_acquire(
     jj_authority_t *state,
     const jj_control_acquire_t *request,
@@ -108,5 +119,11 @@ void jj_authority_snapshot(
 void jj_authority_apply_to_inputs(
     const jj_control_snapshot_t *authority,
     jj_inputs_t *inputs);
+jj_outputs_t jj_authority_control_step(
+    jj_authority_t *state,
+    const jj_inputs_t *authoritative_inputs,
+    uint64_t now_ms,
+    jj_control_snapshot_t *out);
 const char *jj_control_result_str(jj_control_result_t result);
 const char *jj_mode_str(jj_mode_t mode);
+const char *jj_control_loss_reason_str(jj_control_loss_reason_t reason);

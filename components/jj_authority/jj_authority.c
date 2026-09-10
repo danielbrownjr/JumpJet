@@ -2,7 +2,6 @@
 #include "jj_authority.h"
 
 #include <math.h>
-#include <stdio.h>
 #include <string.h>
 
 #ifdef ESP_PLATFORM
@@ -18,7 +17,14 @@ static portMUX_TYPE s_authority_lock = portMUX_INITIALIZER_UNLOCKED;
 static void copy_text(char *destination, size_t size, const char *source)
 {
     if (!destination || size == 0) return;
-    snprintf(destination, size, "%s", source ? source : "");
+    size_t i = 0;
+    if (source) {
+        while (i + 1 < size && source[i] != '\0') {
+            destination[i] = source[i];
+            ++i;
+        }
+    }
+    destination[i] = '\0';
 }
 
 static void advance(uint32_t *value)
@@ -43,6 +49,21 @@ static void snapshot_unlocked(
     }
 }
 
+/*
+ * Lock ordering is AUTHORITY_LOCK -> jj_interlock's state lock. Interlock code
+ * never calls back into jj_authority. Everything below this lock is bounded
+ * in-memory work: no logging, allocation, networking, or blocking services.
+ */
+static void remove_remote_authorization_unlocked(
+    jj_authority_t *state,
+    jj_control_authority_t authority,
+    jj_control_inhibit_t inhibit,
+    jj_block_reason_t reason)
+{
+    jj_interlock_remove_remote_authorization(
+        state->interlock, authority, inhibit, reason);
+}
+
 static bool lease_expire_unlocked(jj_authority_t *state, uint64_t now_ms)
 {
     if (!state->state.lease_active || now_ms < state->lease_deadline_ms)
@@ -54,23 +75,29 @@ static bool lease_expire_unlocked(jj_authority_t *state, uint64_t now_ms)
     advance(&state->state.generation);
     advance(&state->state.revision);
     state->state.last_control_loss_ms = now_ms;
-    copy_text(state->state.last_control_loss_reason,
-              sizeof state->state.last_control_loss_reason,
-              "remote_lease_expired");
+    state->state.last_control_loss_reason =
+        JJ_CONTROL_LOSS_REMOTE_LEASE_EXPIRED;
     if (state->state.mode == JJ_MODE_MANUAL) {
         state->state.manual_demand_authorized = false;
         state->state.active_authority = JJ_AUTHORITY_NONE;
         state->state.control_inhibit = JJ_CONTROL_INHIBIT_NO_AUTHORITY;
+        remove_remote_authorization_unlocked(
+            state, JJ_AUTHORITY_NONE, JJ_CONTROL_INHIBIT_NO_AUTHORITY,
+            JJ_BLOCK_CONTROL_NO_AUTHORITY);
     }
     return true;
 }
 
-void jj_authority_init(jj_authority_t *state, uint32_t lease_ttl_ms)
+void jj_authority_init(
+    jj_authority_t *state,
+    jj_interlock_t *interlock,
+    uint32_t lease_ttl_ms)
 {
-    if (!state) return;
+    if (!state || !interlock) return;
     AUTHORITY_LOCK();
     memset(state, 0, sizeof *state);
     state->lease_ttl_ms = lease_ttl_ms ? lease_ttl_ms : JJ_REMOTE_LEASE_TTL_MS;
+    state->interlock = interlock;
     state->state.revision = 1;
     state->state.generation = 1;
     state->state.mode = JJ_MODE_OFF;
@@ -114,12 +141,16 @@ jj_control_result_t jj_authority_acquire(
         state->state.active_authority = JJ_AUTHORITY_REACQUIRING;
         state->state.control_inhibit =
             JJ_CONTROL_INHIBIT_STATE_REFRESH_REQUIRED;
+        remove_remote_authorization_unlocked(
+            state, JJ_AUTHORITY_REACQUIRING,
+            JJ_CONTROL_INHIBIT_STATE_REFRESH_REQUIRED,
+            JJ_BLOCK_STATE_REFRESH_REQUIRED);
     }
     if (revoked_remote_demand || request->takeover) {
         state->state.last_control_loss_ms = now_ms;
-        copy_text(state->state.last_control_loss_reason,
-                  sizeof state->state.last_control_loss_reason,
-                  request->takeover ? "explicit_takeover" : "remote_reacquired");
+        state->state.last_control_loss_reason = request->takeover
+            ? JJ_CONTROL_LOSS_EXPLICIT_TAKEOVER
+            : JJ_CONTROL_LOSS_REMOTE_REACQUIRED;
     }
     snapshot_unlocked(state, now_ms, out);
     AUTHORITY_UNLOCK();
@@ -179,6 +210,10 @@ jj_control_result_t jj_authority_refresh(
         state->state.active_authority = JJ_AUTHORITY_NONE;
         state->state.control_inhibit = state->state.mode == JJ_MODE_MANUAL
             ? JJ_CONTROL_INHIBIT_NO_AUTHORITY : JJ_CONTROL_INHIBIT_NONE;
+        remove_remote_authorization_unlocked(
+            state, JJ_AUTHORITY_NONE, state->state.control_inhibit,
+            state->state.mode == JJ_MODE_MANUAL
+                ? JJ_BLOCK_CONTROL_NO_AUTHORITY : JJ_BLOCK_OFF);
         advance(&state->state.revision);
     }
     snapshot_unlocked(state, now_ms, out);
@@ -197,13 +232,12 @@ static bool sensors_valid(const jj_inputs_t *input)
 }
 
 static bool base_heat_eligible(
-    const jj_interlock_t *interlock,
+    jj_fault_t fault,
     const jj_inputs_t *input)
 {
-    const jj_outputs_t output = jj_interlock_snapshot(interlock);
     return input->commissioned && sensors_valid(input) &&
         !input->overtemperature_detected &&
-        output.fault == JJ_FAULT_NONE;
+        fault == JJ_FAULT_NONE;
 }
 
 static uint64_t request_signature(const jj_control_mutation_t *request)
@@ -264,7 +298,8 @@ jj_control_result_t jj_authority_mutate(
     uint64_t now_ms,
     jj_control_snapshot_t *out)
 {
-    if (!state || !interlock || !request || !authoritative_inputs)
+    if (!state || !interlock || interlock != state->interlock || !request ||
+        !authoritative_inputs)
         return JJ_CONTROL_INVALID;
     const uint64_t signature = request_signature(request);
     AUTHORITY_LOCK();
@@ -318,11 +353,13 @@ jj_control_result_t jj_authority_mutate(
         state->state.manual_demand_authorized = false;
         state->state.active_authority = JJ_AUTHORITY_NONE;
         state->state.control_inhibit = JJ_CONTROL_INHIBIT_NONE;
+        remove_remote_authorization_unlocked(
+            state, JJ_AUTHORITY_NONE, JJ_CONTROL_INHIBIT_NONE, JJ_BLOCK_OFF);
     } else if (request->kind == JJ_MUTATION_MANUAL) {
         const jj_outputs_t output = jj_interlock_snapshot(interlock);
         if (output.fault != JJ_FAULT_NONE) {
             result = JJ_CONTROL_HARDWARE_FAULT;
-        } else if (!base_heat_eligible(interlock, authoritative_inputs) ||
+        } else if (!base_heat_eligible(output.fault, authoritative_inputs) ||
                    authoritative_inputs->fan_proof != JJ_FAN_PROOF_PROVEN ||
                    !isfinite(request->target_c) ||
                    request->target_c < JJ_MANUAL_TARGET_MIN_C ||
@@ -339,7 +376,7 @@ jj_control_result_t jj_authority_mutate(
         const jj_outputs_t output = jj_interlock_snapshot(interlock);
         if (output.fault != JJ_FAULT_NONE) {
             result = JJ_CONTROL_HARDWARE_FAULT;
-        } else if (!base_heat_eligible(interlock, authoritative_inputs) ||
+        } else if (!base_heat_eligible(output.fault, authoritative_inputs) ||
                    authoritative_inputs->fan_proof != JJ_FAN_PROOF_PROVEN ||
                    !authoritative_inputs->printer.online ||
                    !authoritative_inputs->printer.printing ||
@@ -404,6 +441,25 @@ void jj_authority_apply_to_inputs(
     inputs->manual_demand_authorized = authority->manual_demand_authorized;
 }
 
+jj_outputs_t jj_authority_control_step(
+    jj_authority_t *state,
+    const jj_inputs_t *authoritative_inputs,
+    uint64_t now_ms,
+    jj_control_snapshot_t *out)
+{
+    if (!state || !state->interlock || !authoritative_inputs)
+        return (jj_outputs_t){.fault = JJ_FAULT_SENSOR,
+                              .block_reason = JJ_BLOCK_FAULT_LATCHED};
+    jj_inputs_t input = *authoritative_inputs;
+    AUTHORITY_LOCK();
+    (void)lease_expire_unlocked(state, now_ms);
+    jj_authority_apply_to_inputs(&state->state, &input);
+    const jj_outputs_t output = jj_interlock_step(state->interlock, &input);
+    snapshot_unlocked(state, now_ms, out);
+    AUTHORITY_UNLOCK();
+    return output;
+}
+
 const char *jj_control_result_str(jj_control_result_t result)
 {
     switch (result) {
@@ -426,6 +482,18 @@ const char *jj_mode_str(jj_mode_t mode)
     case JJ_MODE_OFF: return "off";
     case JJ_MODE_MANUAL: return "manual";
     case JJ_MODE_AUTOMATIC: return "automatic";
+    default: return "unknown";
+    }
+}
+
+const char *jj_control_loss_reason_str(jj_control_loss_reason_t reason)
+{
+    switch (reason) {
+    case JJ_CONTROL_LOSS_NONE: return "none";
+    case JJ_CONTROL_LOSS_REMOTE_LEASE_EXPIRED:
+        return "remote_lease_expired";
+    case JJ_CONTROL_LOSS_EXPLICIT_TAKEOVER: return "explicit_takeover";
+    case JJ_CONTROL_LOSS_REMOTE_REACQUIRED: return "remote_reacquired";
     default: return "unknown";
     }
 }
