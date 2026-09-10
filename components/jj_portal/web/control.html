@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Jump Jet Control</title>
+  <style>
+    :root { color-scheme: dark; font: 16px system-ui, sans-serif; }
+    body { background:#11151a; color:#edf2f7; margin:0; padding:1rem; }
+    main { max-width:42rem; margin:auto; }
+    section { background:#1a2028; border:1px solid #34404e; border-radius:.7rem; padding:1rem; margin:1rem 0; }
+    h1,h2,p { margin:.35rem 0 .8rem; }
+    .status { font-size:1.1rem; }
+    .fault { color:#ff8080; }
+    .inhibit { color:#ffd27a; }
+    button,input { font:inherit; padding:.65rem; margin:.25rem; }
+    button { background:#2c6bed; color:white; border:0; border-radius:.4rem; }
+    button:disabled { opacity:.45; }
+    button.secondary { background:#4b5563; }
+    dl { display:grid; grid-template-columns:1fr 1fr; gap:.4rem; }
+    dt { color:#aeb9c6; } dd { margin:0; text-align:right; }
+    .advanced { font-size:.85rem; color:#aeb9c6; }
+  </style>
+</head>
+<body>
+<main>
+  <h1>Jump Jet</h1>
+  <p id="connection" class="status">Reacquiring control…</p>
+  <section>
+    <h2 id="mode">Off · None</h2>
+    <p id="constraint" class="inhibit">Loading authoritative state…</p>
+    <dl>
+      <dt>Configured target</dt><dd id="configured">—</dd>
+      <dt>Effective target</dt><dd id="effective">—</dd>
+      <dt>Heater request</dt><dd id="requested">—</dd>
+      <dt>Heater allowed</dt><dd id="allowed">—</dd>
+      <dt>Heater delivered</dt><dd id="delivered">—</dd>
+      <dt>Thermal handling</dt><dd id="thermal">—</dd>
+      <dt>Health / fault</dt><dd id="health">—</dd>
+    </dl>
+  </section>
+  <section>
+    <h2>Control</h2>
+    <label>Manual target °C <input id="target" type="number" min="30" max="50" value="45"></label>
+    <div>
+      <button data-action="off">Off</button>
+      <button data-action="manual">Manual</button>
+      <button data-action="automatic">Automatic</button>
+      <button data-action="clear_fault" class="secondary">Acknowledge fault</button>
+    </div>
+    <button id="takeover" class="secondary" hidden>Take over control</button>
+    <p id="message" aria-live="polite"></p>
+  </section>
+  <section class="advanced">
+    <h2>Advanced control details</h2>
+    <pre id="advanced">—</pre>
+  </section>
+</main>
+<script src="/jumpjet-control.js"></script>
+<script>
+  "use strict";
+  const $ = id => document.getElementById(id);
+  let owner = sessionStorage.getItem("jumpjet-control-owner");
+  if (!owner) {
+    owner = "browser-" + crypto.randomUUID().replaceAll("-", "").slice(0, 23);
+    sessionStorage.setItem("jumpjet-control-owner", owner);
+  }
+  const buttons = Array.from(document.querySelectorAll("[data-action]"));
+  const client = new JumpJetControl.Client({
+    fetch: window.fetch.bind(window), owner,
+    onReady(ready) {
+      buttons.forEach(button => { button.disabled = !ready; });
+      $("connection").textContent = ready ? "Remote control connected" : "Control unavailable";
+    },
+    onControlLost(code) {
+      $("message").textContent = "Control lost: " + (code || "refresh required");
+      $("takeover").hidden = code !== "control_authority_required";
+    },
+    onState(state) {
+      const cap = value => value ? value[0].toUpperCase() + value.slice(1) : "None";
+      $("mode").textContent = JumpJetControl.controllerLabel(state);
+      $("constraint").textContent = JumpJetControl.constraintMessage(
+        state.dominant_constraint);
+      $("configured").textContent = state.configured_target_c + " °C";
+      $("effective").textContent = state.effective_target_c == null ? "—" : state.effective_target_c + " °C";
+      $("requested").textContent = state.heater.requested ? "On" : "Off";
+      $("allowed").textContent = state.heater.allowed ? "On" : "Off";
+      $("delivered").textContent = state.heater.delivered ? "On" : "Off";
+      $("thermal").textContent = cap(state.thermal_state);
+      $("health").textContent = state.safety.fault_latched ? "Fault: " + state.safety.fault : state.safety.health;
+      $("health").className = state.safety.fault_latched ? "fault" : "";
+      $("advanced").textContent = JSON.stringify({
+        owner: state.control.lease_owner,
+        generation: state.control.generation,
+        revision: state.state_revision,
+        expires_in_ms: state.control.expires_in_ms,
+        control_inhibit: state.control.inhibit,
+        dominant_constraint: state.dominant_constraint,
+        last_loss_reason: state.control.last_loss_reason || null,
+      }, null, 2);
+    },
+  });
+  async function resume(takeover) {
+    $("message").textContent = "Reacquiring authority and refreshing state…";
+    try {
+      await client.resume(takeover);
+      $("message").textContent = "Authoritative state refreshed. A new explicit request is required.";
+      $("takeover").hidden = true;
+    } catch (error) {
+      $("message").textContent = "Unable to acquire control: " + error.code;
+      $("takeover").hidden = error.code !== "control_authority_required";
+    }
+  }
+  buttons.forEach(button => button.addEventListener("click", async () => {
+    try {
+      const target = Number($("target").value);
+      await client.mutate(button.dataset.action, target);
+      $("message").textContent = "Server accepted the complete request.";
+    } catch (error) {
+      $("message").textContent = JumpJetControl.mutationErrorMessage(error.code);
+    }
+  }));
+  $("takeover").addEventListener("click", () => {
+    if (confirm("Take over remote control? Existing Manual demand will be stopped.")) resume(true);
+  });
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "visible") resume(false);
+  });
+  window.addEventListener("pageshow", event => { if (event.persisted) resume(false); });
+  setInterval(() => {
+    if (document.visibilityState === "visible") client.heartbeat().catch(() => {});
+  }, 15000);
+  resume(false);
+</script>
+</body>
+</html>

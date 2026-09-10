@@ -5,12 +5,14 @@
 #include "dc_evlog.h"
 #include "dc_prusa.h"
 #include "dc_wifi.h"
+#include "jj_authority.h"
 #include "jj_identity.h"
 #include "jj_interlock.h"
 #include "jj_portal.h"
 #include "esp_check.h"
 #include "esp_log.h"
 #include "esp_ota_ops.h"
+#include "esp_timer.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "nvs_flash.h"
@@ -18,6 +20,7 @@
 
 static const char *TAG = JJ_IDENTITY_PRODUCT_ID;
 static jj_interlock_t s_interlock;
+static jj_authority_t s_authority;
 
 static bool printer_is_printing(const char *state)
 {
@@ -39,7 +42,13 @@ static void control_task(void *arg)
             // dc_prusa has already applied its authoritative 15-second
             // freshness rule. Jump Jet deliberately has no second timer.
         }
-        const jj_outputs_t output = jj_interlock_step(&s_interlock, &input);
+        /*
+         * Cached Prusa status is read before authority. The final authority
+         * sample and interlock decision are one short, ordered control step.
+         */
+        const uint64_t now_ms = (uint64_t)esp_timer_get_time() / 1000U;
+        const jj_outputs_t output = jj_authority_control_step(
+            &s_authority, &input, now_ms, NULL);
         if (!startup_reported) {
             startup_reported = true;
             xTaskNotifyGive(startup_task);
@@ -65,6 +74,7 @@ void app_main(void)
     }
     ESP_ERROR_CHECK(err);
     jj_interlock_init(&s_interlock);
+    jj_authority_init(&s_authority, &s_interlock, JJ_REMOTE_LEASE_TTL_MS);
     BaseType_t created = xTaskCreate(control_task, "jj_control", 4096,
                                      xTaskGetCurrentTaskHandle(), 8, NULL);
     ESP_ERROR_CHECK(created == pdPASS ? ESP_OK : ESP_ERR_NO_MEM);
@@ -77,7 +87,7 @@ void app_main(void)
     ESP_ERROR_CHECK(dc_wifi_set_identity(&identity));
     ESP_ERROR_CHECK(dc_wifi_start());
     ESP_ERROR_CHECK(dc_prusa_start());
-    ESP_ERROR_CHECK(jj_portal_start(&s_interlock));
+    ESP_ERROR_CHECK(jj_portal_start(&s_interlock, &s_authority));
     ESP_ERROR_CHECK(ulTaskNotifyTake(pdTRUE, pdMS_TO_TICKS(2000)) > 0 ?
                     ESP_OK : ESP_ERR_TIMEOUT);
     const jj_outputs_t startup_output = jj_interlock_snapshot(&s_interlock);
