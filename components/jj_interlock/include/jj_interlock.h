@@ -9,6 +9,23 @@
 
 typedef enum { JJ_MODE_OFF = 0, JJ_MODE_MANUAL, JJ_MODE_AUTOMATIC } jj_mode_t;
 typedef enum {
+    JJ_AUTHORITY_NONE = 0,
+    JJ_AUTHORITY_REMOTE,
+    JJ_AUTHORITY_AUTOMATIC,
+    JJ_AUTHORITY_REACQUIRING,
+} jj_control_authority_t;
+typedef enum {
+    JJ_CONTROL_INHIBIT_NONE = 0,
+    JJ_CONTROL_INHIBIT_NO_AUTHORITY,
+    JJ_CONTROL_INHIBIT_STATE_REFRESH_REQUIRED,
+    JJ_CONTROL_INHIBIT_NOT_ELIGIBLE,
+} jj_control_inhibit_t;
+typedef enum {
+    JJ_THERMAL_IDLE = 0,
+    JJ_THERMAL_HEATING,
+    JJ_THERMAL_COOLDOWN,
+} jj_thermal_state_t;
+typedef enum {
     JJ_SENSOR_UNAVAILABLE = 0, JJ_SENSOR_OK, JJ_SENSOR_OPEN,
     JJ_SENSOR_SHORT, JJ_SENSOR_IMPLAUSIBLE,
 } jj_sensor_status_t;
@@ -26,7 +43,8 @@ typedef enum {
     JJ_BLOCK_FAULT_LATCHED, JJ_BLOCK_PRINTER_UNAVAILABLE,
     JJ_BLOCK_PRINTER_NOT_PRINTING, JJ_BLOCK_AUTO_POLICY_UNAVAILABLE,
     JJ_BLOCK_MANUAL_TARGET_INVALID, JJ_BLOCK_FAN_PROOF_PENDING,
-    JJ_BLOCK_INVALID_MODE,
+    JJ_BLOCK_INVALID_MODE, JJ_BLOCK_CONTROL_NO_AUTHORITY,
+    JJ_BLOCK_STATE_REFRESH_REQUIRED, JJ_BLOCK_AUTO_AUTHORITY_UNAVAILABLE,
 } jj_block_reason_t;
 
 typedef struct { jj_sensor_status_t status; float temperature_c; } jj_sensor_sample_t;
@@ -39,6 +57,11 @@ typedef struct {
     bool commissioned;
     jj_mode_t mode;
     float manual_target_c;
+    jj_control_authority_t active_authority;
+    jj_control_inhibit_t control_inhibit;
+    bool manual_demand_authorized;
+    bool automatic_target_available;
+    float automatic_target_c;
     jj_sensor_sample_t chamber;
     jj_sensor_sample_t outlet;
     jj_sensor_sample_t case_sensor;
@@ -53,6 +76,9 @@ typedef struct {
     uint8_t fan_percent;
     float effective_target_c;
     bool thermal_management_required;
+    jj_control_authority_t active_authority;
+    jj_control_inhibit_t control_inhibit;
+    jj_thermal_state_t thermal_state;
     jj_fault_t fault;
     jj_block_reason_t block_reason;
 } jj_outputs_t;
@@ -65,3 +91,6 @@ bool jj_interlock_clear_fault(jj_interlock_t *state, const jj_inputs_t *input);
 jj_outputs_t jj_interlock_snapshot(const jj_interlock_t *state);
 const char *jj_fault_str(jj_fault_t fault);
 const char *jj_block_reason_str(jj_block_reason_t reason);
+const char *jj_control_authority_str(jj_control_authority_t authority);
+const char *jj_control_inhibit_str(jj_control_inhibit_t inhibit);
+const char *jj_thermal_state_str(jj_thermal_state_t state);

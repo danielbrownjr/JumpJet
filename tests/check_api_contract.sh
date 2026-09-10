@@ -29,6 +29,19 @@ grep -q 'JJ_MANUAL_TARGET_DEFAULT_C 45.0f' "$header"
 grep -q 'JJ_MANUAL_TARGET_MAX_C     50.0f' "$header"
 grep -q 'strcmp(state, "PRINTING") == 0' "$app"
 
+for route in '/api/v2/control/acquire' '/api/v2/control/refresh' \
+             '/api/v2/control/heartbeat' '/api/v2/control/mutate'; do
+    grep -q "$route" "$portal"
+done
+for error in 'control_authority_required' 'control_authority_lost' \
+             'control_generation_stale' 'state_revision_conflict' \
+             'control_request_ineligible' 'hardware_fault_latched'; do
+    grep -q "$error" "$root/components/jj_authority/jj_authority.c"
+done
+grep -q 'application/json' "$portal"
+grep -q 'authority->active_authority == JJ_AUTHORITY_REMOTE' "$portal"
+grep -q 'authority->active_authority == JJ_AUTHORITY_AUTOMATIC' "$portal"
+
 if rg -n 'power_on|heater_control|fan_control|"heating"|"fan"' "$portal" \
     | grep 'cJSON_CreateString' >/dev/null; then
     echo "unavailable physical capability is advertised" >&2

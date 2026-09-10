@@ -72,7 +72,8 @@ for every implemented fault. No printer installation at this phase.
 - allowlist exact `PRINTING` and fail all other states cold
 - derive and implement the bed-target-to-chamber-target production policy; keep
   AUTOMATIC unavailable until then
-- implement validated, revision-aware API mutations and product settings
+- integrate the implemented validated, generation/revision-aware API mutations
+  with release-intent sensing and persistent product settings
 - show temperatures, target, duty, fans, mode, PrusaLink state, bed target,
   interlocks, faults, firmware, and network state
 - advertise heating capabilities only after the corresponding hardware is commissioned

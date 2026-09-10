@@ -29,6 +29,15 @@ jobs:
       - name: Test heater interlock state machine
         run: ./tests/run_interlock_host_test.sh
 
+      - name: Test control authority state machine
+        run: ./tests/run_authority_host_test.sh
+
+      - name: Test browser control client
+        run: node --test tests/control-client.test.cjs
+
+      - name: Check browser JavaScript syntax
+        run: node --check components/jj_portal/web/control-client.js
+
       - name: Check canonical product identity
         run: sh tests/check_identity_contract.sh
 

@@ -13,8 +13,44 @@ Cooldown or fault-related fan activity may continue while mode is OFF.
 
 The retained MANUAL target persists across mode changes and reboot. Its allowed
 range is 30–50 °C inclusive and its default is 45 °C. Inputs outside that range
-are rejected, never clamped. The foundation models these semantics but exposes
-no mode/target mutation yet; NVS persistence is a later implementation gate.
+are rejected, never clamped. Atomic mode/target mutations now model these
+semantics; NVS persistence remains a later implementation gate.
+
+## Control authority and control inhibits
+
+Operating mode, active control authority, recoverable control inhibit, latched
+hardware/safety fault, and thermal handling are separate state dimensions.
+Authority is one of NONE, REMOTE, AUTOMATIC, or REACQUIRING.
+
+MANUAL heater demand is bound to a 60-second remote lease. The timeout is an
+initial product/network policy, not a hardware safety threshold. Lease expiry
+or explicit takeover immediately removes MANUAL demand, advances the generation,
+and creates a recoverable `no_authority` inhibit. It does not create or clear a
+hardware fault. Autonomous cooldown and fault fan policy continues. A reconnect
+retains visible configuration but never restores old demand: the client must
+acquire authority, complete an authoritative refresh, and submit a new eligible
+request.
+
+No client silently wins a remote lease. A different owner receives
+`control_authority_required` unless it explicitly confirms takeover. Takeover
+revokes the old lease, zeros prior remote demand, advances generation, and also
+requires refresh plus a new request.
+
+AUTOMATIC authority is product-local after an atomic transition commits. Its
+demand never depends on a browser heartbeat or inherits REMOTE authority. It
+continues after browser lease expiry only while fresh exact `PRINTING` status,
+valid sensors, fan proof, interlocks, policy eligibility, and all safety vetoes
+remain satisfied. The bed-target policy remains undefined, so production
+AUTOMATIC heating stays unavailable.
+
+Mutations carry lease ID, control generation, expected state revision, complete
+requested state, and an optional idempotency UUID. Lease, generation, revision,
+current inputs, faults, and transition eligibility are validated atomically;
+the server commits the complete request or nothing. Stable failures are
+`control_authority_required`, `control_authority_lost`,
+`control_generation_stale`, `state_revision_conflict`,
+`control_request_ineligible`, `control_request_conflict`, and
+`hardware_fault_latched`. Reacquisition never acknowledges a real fault.
 
 ## AUTOMATIC and PrusaLink
 

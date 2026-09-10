@@ -5,12 +5,14 @@
 #include "dc_evlog.h"
 #include "dc_prusa.h"
 #include "dc_wifi.h"
+#include "jj_authority.h"
 #include "jj_identity.h"
 #include "jj_interlock.h"
 #include "jj_portal.h"
 #include "esp_check.h"
 #include "esp_log.h"
 #include "esp_ota_ops.h"
+#include "esp_timer.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "nvs_flash.h"
@@ -18,6 +20,7 @@
 
 static const char *TAG = JJ_IDENTITY_PRODUCT_ID;
 static jj_interlock_t s_interlock;
+static jj_authority_t s_authority;
 
 static bool printer_is_printing(const char *state)
 {
@@ -31,6 +34,11 @@ static void control_task(void *arg)
     jj_block_reason_t previous = JJ_BLOCK_NONE;
     for (;;) {
         jj_inputs_t input = jj_inputs_safe_defaults();
+        const uint64_t now_ms = (uint64_t)esp_timer_get_time() / 1000U;
+        (void)jj_authority_tick(&s_authority, now_ms);
+        jj_control_snapshot_t authority;
+        jj_authority_snapshot(&s_authority, now_ms, &authority);
+        jj_authority_apply_to_inputs(&authority, &input);
         dc_prusa_status_t printer = {0};
         if (dc_prusa_get_status(&printer) == ESP_OK) {
             input.printer.online = printer.online;
@@ -65,6 +73,7 @@ void app_main(void)
     }
     ESP_ERROR_CHECK(err);
     jj_interlock_init(&s_interlock);
+    jj_authority_init(&s_authority, JJ_REMOTE_LEASE_TTL_MS);
     BaseType_t created = xTaskCreate(control_task, "jj_control", 4096,
                                      xTaskGetCurrentTaskHandle(), 8, NULL);
     ESP_ERROR_CHECK(created == pdPASS ? ESP_OK : ESP_ERR_NO_MEM);
@@ -77,7 +86,7 @@ void app_main(void)
     ESP_ERROR_CHECK(dc_wifi_set_identity(&identity));
     ESP_ERROR_CHECK(dc_wifi_start());
     ESP_ERROR_CHECK(dc_prusa_start());
-    ESP_ERROR_CHECK(jj_portal_start(&s_interlock));
+    ESP_ERROR_CHECK(jj_portal_start(&s_interlock, &s_authority));
     ESP_ERROR_CHECK(ulTaskNotifyTake(pdTRUE, pdMS_TO_TICKS(2000)) > 0 ?
                     ESP_OK : ESP_ERR_TIMEOUT);
     const jj_outputs_t startup_output = jj_interlock_snapshot(&s_interlock);

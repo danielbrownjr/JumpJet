@@ -29,6 +29,11 @@ heater safety decisions local to Jump Jet.
 - `dc_wifi`, `dc_portal`, `dc_ui`, `dc_evlog`, and read-only `dc_prusa` pinned to
   dragon-core v0.32.0 (`4e041d864763d468a50e9649807827dd83dd54bc`)
 - exactly three product modes: OFF, MANUAL, and AUTOMATIC; boot/reset is always OFF
+- orthogonal NONE/REMOTE/AUTOMATIC/REACQUIRING authority, recoverable control
+  inhibits, latched safety faults, and autonomous cooldown state
+- lease-bound MANUAL demand with explicit takeover, atomic revision-validated
+  mutations, and a reacquire-plus-refresh requirement after control loss
+- product-local AUTOMATIC authority that does not depend on a browser heartbeat
 - manual target policy of 30–50 °C inclusive with a 45 °C default and rejection,
   never clamping, outside that range
 - `dc_prusa`'s existing 15-second freshness result used directly, with no second
@@ -66,6 +71,8 @@ fault-injection evidence. The browser and API are never the safety boundary.
 
 ```sh
 ./tests/run_interlock_host_test.sh
+./tests/run_authority_host_test.sh
+node --test tests/control-client.test.cjs
 sh tests/check_identity_contract.sh
 sh tests/check_api_contract.sh
 sh tests/check_actuation_allowlist.sh
@@ -82,6 +89,7 @@ For ESP-IDF 5.3 or newer:
 
 - [Product and safety contract](docs/PRODUCT_SAFETY_CONTRACT.md)
 - [Firmware architecture](docs/ARCHITECTURE.md)
+- [Control-authority and mutation API](docs/CONTROL_AUTHORITY.md)
 - [Hardware baseline](docs/HARDWARE_BASELINE.md)
 - [CZ4060 characterization](docs/hardware/cz4060-characterization.md)
 - [Safety verification](docs/SAFETY_VERIFICATION.md)

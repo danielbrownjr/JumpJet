@@ -9,7 +9,7 @@
 
 static jj_inputs_t nominal(jj_mode_t mode)
 {
-    return (jj_inputs_t){
+    jj_inputs_t input = {
         .commissioned = true,
         .mode = mode,
         .manual_target_c = JJ_MANUAL_TARGET_DEFAULT_C,
@@ -19,6 +19,13 @@ static jj_inputs_t nominal(jj_mode_t mode)
         .printer = {.online = true, .printing = true, .bed_target_c = 100.0f},
         .fan_proof = JJ_FAN_PROOF_PROVEN,
     };
+    if (mode == JJ_MODE_MANUAL) {
+        input.active_authority = JJ_AUTHORITY_REMOTE;
+        input.manual_demand_authorized = true;
+    } else if (mode == JJ_MODE_AUTOMATIC) {
+        input.active_authority = JJ_AUTHORITY_AUTOMATIC;
+    }
+    return input;
 }
 
 static jj_outputs_t step_once(jj_inputs_t input)
@@ -87,6 +94,26 @@ static void test_automatic_is_whitelisted_and_policy_blocked(void)
     check_cold(step_once(input), JJ_BLOCK_AUTO_POLICY_UNAVAILABLE);
 }
 
+static void test_automatic_authority_and_eligibility_are_independent(void)
+{
+    jj_inputs_t input = nominal(JJ_MODE_AUTOMATIC);
+    input.automatic_target_available = true;
+    input.automatic_target_c = 42.0f;
+    jj_outputs_t output = step_once(input);
+    CHECK(output.heater_requested);
+    CHECK(output.active_authority == JJ_AUTHORITY_AUTOMATIC);
+    CHECK(output.thermal_state == JJ_THERMAL_HEATING);
+
+    input.active_authority = JJ_AUTHORITY_NONE;
+    check_cold(step_once(input), JJ_BLOCK_AUTO_AUTHORITY_UNAVAILABLE);
+    input.active_authority = JJ_AUTHORITY_AUTOMATIC;
+    input.printer.online = false;
+    output = step_once(input);
+    check_cold(output, JJ_BLOCK_PRINTER_UNAVAILABLE);
+    CHECK(output.control_inhibit == JJ_CONTROL_INHIBIT_NOT_ELIGIBLE);
+    CHECK(output.fault == JJ_FAULT_NONE);
+}
+
 static void test_faults_latch_and_need_explicit_safe_clear(void)
 {
     jj_interlock_t state;
@@ -151,6 +178,7 @@ int main(void)
     test_boot_defaults_and_modes();
     test_manual_target_is_rejected_not_clamped();
     test_automatic_is_whitelisted_and_policy_blocked();
+    test_automatic_authority_and_eligibility_are_independent();
     test_faults_latch_and_need_explicit_safe_clear();
     test_off_keeps_thermal_management_request();
     test_fan_proof_and_null_inputs_fail_cold();
