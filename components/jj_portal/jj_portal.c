@@ -24,10 +24,10 @@ static jj_authority_t *s_authority;
 static char s_device_id[32];
 static char s_boot_id[33];
 
-extern const unsigned char _binary_web_control_html_start[];
-extern const unsigned char _binary_web_control_html_end[];
-extern const unsigned char _binary_web_control_client_js_start[];
-extern const unsigned char _binary_web_control_client_js_end[];
+extern const unsigned char _binary_control_html_start[];
+extern const unsigned char _binary_control_html_end[];
+extern const unsigned char _binary_control_client_js_start[];
+extern const unsigned char _binary_control_client_js_end[];
 
 static uint64_t monotonic_ms(void)
 {
@@ -299,9 +299,9 @@ static esp_err_t control_page_get(httpd_req_t *req)
 {
     httpd_resp_set_type(req, "text/html; charset=utf-8");
     httpd_resp_set_hdr(req, "Cache-Control", "no-store");
-    return httpd_resp_send(req, (const char *)_binary_web_control_html_start,
-                           (uintptr_t)_binary_web_control_html_end -
-                           (uintptr_t)_binary_web_control_html_start);
+    return httpd_resp_send(req, (const char *)_binary_control_html_start,
+                           (uintptr_t)_binary_control_html_end -
+                           (uintptr_t)_binary_control_html_start);
 }
 
 static esp_err_t control_script_get(httpd_req_t *req)
@@ -309,9 +309,9 @@ static esp_err_t control_script_get(httpd_req_t *req)
     httpd_resp_set_type(req, "application/javascript; charset=utf-8");
     httpd_resp_set_hdr(req, "Cache-Control", "no-store");
     return httpd_resp_send(req,
-                           (const char *)_binary_web_control_client_js_start,
-                           (uintptr_t)_binary_web_control_client_js_end -
-                           (uintptr_t)_binary_web_control_client_js_start);
+                           (const char *)_binary_control_client_js_start,
+                           (uintptr_t)_binary_control_client_js_end -
+                           (uintptr_t)_binary_control_client_js_start);
 }
 
 static const char *result_status(jj_control_result_t result)

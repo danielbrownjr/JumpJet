@@ -41,6 +41,8 @@ done
 grep -q 'application/json' "$portal"
 grep -q 'authority->active_authority == JJ_AUTHORITY_REMOTE' "$portal"
 grep -q 'authority->active_authority == JJ_AUTHORITY_AUTOMATIC' "$portal"
+grep -q '_binary_control_html_start' "$portal"
+grep -q '_binary_control_client_js_start' "$portal"
 
 if rg -n 'power_on|heater_control|fan_control|"heating"|"fan"' "$portal" \
     | grep 'cJSON_CreateString' >/dev/null; then
