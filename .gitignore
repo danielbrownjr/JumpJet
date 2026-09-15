@@ -17,3 +17,6 @@ _autosave-*
 *.drl
 *.pos
 *.rpt
+
+# Read-only dependencies for host characterization fixtures
+.test-deps/

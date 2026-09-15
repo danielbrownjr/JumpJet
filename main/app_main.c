@@ -6,6 +6,7 @@
 #include "dc_prusa.h"
 #include "dc_wifi.h"
 #include "jj_identity.h"
+#include "jj_bringup.h"
 #include "jj_interlock.h"
 #include "jj_portal.h"
 #include "esp_check.h"
@@ -57,6 +58,7 @@ void app_main(void)
 {
     dc_evlog_console_init();
     dc_evlog_init();
+    jj_bringup_init();
     ESP_LOGI(TAG, "%s cold-safe foundation starting", JJ_IDENTITY_DISPLAY_NAME);
     esp_err_t err = nvs_flash_init();
     if (err == ESP_ERR_NVS_NO_FREE_PAGES || err == ESP_ERR_NVS_NEW_VERSION_FOUND) {

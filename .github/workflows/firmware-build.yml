@@ -29,6 +29,25 @@ jobs:
       - name: Test heater interlock state machine
         run: ./tests/run_interlock_host_test.sh
 
+      - name: Check out pinned dragon-core for host fixtures
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: justinh-rahb/dragon-core
+          ref: 4e041d864763d468a50e9649807827dd83dd54bc
+          path: .test-deps/dragon-core
+
+      - name: Check out matching ESP-IDF headers and JSON dependency
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: espressif/esp-idf
+          ref: v5.3
+          path: .test-deps/esp-idf
+
+      - name: Test candidate diagnostics and configuration
+        run: |
+          git -C .test-deps/esp-idf submodule update --init --depth 1 components/json/cJSON
+          DRAGON_CORE_PATH="$PWD/.test-deps/dragon-core" IDF_PATH="$PWD/.test-deps/esp-idf" bash tests/run_bringup_host_test.sh
+
       - name: Check canonical product identity
         run: sh tests/check_identity_contract.sh
 
