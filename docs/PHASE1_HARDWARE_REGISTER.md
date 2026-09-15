@@ -1,6 +1,6 @@
 # Phase 1 hardware source-of-truth register
 
-Last updated: 2026-09-08
+Last updated: 2026-09-15
 
 This is the living engineering register for JumpJet Rev A Phase-1 hardware
 implementation. It records what is known, how it is known, what remains
@@ -42,6 +42,19 @@ Firmware thresholds must not be derived directly from the standalone heater
 temperatures.
 
 ## 2. ESP32-S3 Super Mini mechanical implementation
+
+### TinyS3D candidate status
+
+Unexpected Maker TinyS3D (Adafruit #6401) is a **PROTOTYPE CANDIDATE**.
+Direct inspection and esptool confirm through-hole mounting and 8 MB flash.
+The actual JumpJet Phase 0 firmware built and booted on the specimen, replacing
+CircuitPython. **5 V / USB VBUS isolation/backfeed behavior remains unresolved**:
+the reverse-voltage test stopped while the unloaded reading was still rising.
+Loaded power-path testing, real-network provisioning and physical dimensions
+remain open. Evidence, reproduction notes and the detailed checklist are in the
+[TinyS3D characterization record](hardware/tinys3d-characterization.md).
+Production module selection, GPIO assignment and carrier footprint remain open;
+the following Super Mini evidence applies to that module only.
 
 | Item | Status | Current value / decision | Evidence / source | Confidence | Remaining validation | Blocks |
 |---|---|---|---|---|---|---|

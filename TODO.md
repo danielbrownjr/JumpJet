@@ -19,6 +19,9 @@ implementation starts, and keep only the summary checkbox here.
 - [x] Record the measured ESP32-S3 Super Mini envelope and provisional nominal
   pin geometry
 - [ ] Verify the installed ESP32-S3 Super Mini flash size
+- [ ] Complete TinyS3D candidate characterization: loaded 5 V/VBUS retest,
+  real-network Wi-Fi provisioning and caliper measurements; see the
+  [remaining characterization checklist](docs/hardware/tinys3d-characterization.md#remaining-characterization)
 - [ ] Complete the production castellated footprint after the provisional land
   geometry and exact registration, underside-contact isolation map, antenna
   keepout, USB access envelope, and physical pin numbering are verified
