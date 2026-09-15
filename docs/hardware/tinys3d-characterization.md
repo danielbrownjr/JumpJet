@@ -63,6 +63,22 @@ open the console before the boot burst. No firmware console change was needed.
 | USB powered; DMM from header `5V` to GND | 4.871 V | Source VBUS was not independently measured; cable/contact drop and onboard-path drop cannot be separated |
 | USB-C disconnected; approximately 4.87 V applied to header `5V`; DMM from USB-C VBUS to GND | Started at 0.235 V and continued rising | Test stopped before settling; no defined VBUS load, elapsed-time trace, or final voltage recorded |
 
+### Additional user-reported reverse-voltage observation
+
+During the unloaded/high-impedance reverse-voltage/isolation experiment, Dan
+reported **approximately 0.173 V initially → approximately 0.600 V after
+approximately 5 minutes, still slowly rising**. This is a supplied physical
+observation, not a measurement performed during the scaffolding session.
+The earlier 0.235 V entry above is retained as prior recorded evidence; the
+relationship between that reading and this later report has not been established.
+No measurement topology, meter impedance, resistor value or other missing setup
+detail is inferred for the new observation.
+
+**VBUS isolation/backfeed remains unresolved.** This reading establishes neither
+direct 5 V/VBUS coupling, confirmed isolation, nor safe simultaneous power.
+A weak leakage/capacitive-charging path is one plausible explanation; the circuit
+mechanism is not established. **Loaded resistor retesting remains required.**
+
 A high-impedance DMM can display voltage from leakage into an otherwise unloaded
 node. Meter input impedance was not measured (approximately 10 MΩ was only a
 typical-value assumption). The partial rising reading does not establish the
@@ -146,3 +162,7 @@ Through-hole carrier mounting (direct headers or sockets) remains undecided.
 - [ ] Confirm PSRAM presence/size by runtime query or chip marking.
 - [ ] Verify antenna-select default/IO38 behavior and usable GPIO/ADC mapping.
 - [ ] Establish mounting method and verify the candidate footprint at 1:1 scale.
+
+Read-only firmware capture instructions and field semantics are in the
+[bring-up diagnostics guide](tinys3d-bringup-diagnostics.md). This scaffolding
+is not additional physical validation of the candidate.
