@@ -119,24 +119,9 @@ static jj_outputs_t step_unlocked(jj_interlock_t *state, const jj_inputs_t *inpu
             return blocked(state, JJ_BLOCK_PRINTER_UNAVAILABLE, input);
         if (!input->printer.printing)
             return blocked(state, JJ_BLOCK_PRINTER_NOT_PRINTING, input);
-        /* dc_prusa owns its 15 s freshness decision. No second timer lives here. */
-        if (!input->automatic_target_available ||
-            !isfinite(input->automatic_target_c) ||
-            input->automatic_target_c <= 0.0f)
-            return blocked(state, JJ_BLOCK_AUTO_POLICY_UNAVAILABLE, input);
-        const jj_outputs_t output = {
-            .heater_requested = true,
-            .fan_percent = 100,
-            .effective_target_c = input->automatic_target_c,
-            .thermal_management_required = true,
-            .active_authority = JJ_AUTHORITY_AUTOMATIC,
-            .control_inhibit = JJ_CONTROL_INHIBIT_NONE,
-            .thermal_state = JJ_THERMAL_HEATING,
-            .fault = JJ_FAULT_NONE,
-            .block_reason = JJ_BLOCK_NONE,
-        };
-        state->last_output = output;
-        return output;
+        /* dc_prusa owns its 15 s freshness decision. No second timer lives here.
+         * Exact bed-target mapping is intentionally undefined, so AUTO is cold. */
+        return blocked(state, JJ_BLOCK_AUTO_POLICY_UNAVAILABLE, input);
     }
     if (input->active_authority == JJ_AUTHORITY_REACQUIRING ||
         input->control_inhibit == JJ_CONTROL_INHIBIT_STATE_REFRESH_REQUIRED)

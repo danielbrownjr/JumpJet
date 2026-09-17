@@ -100,9 +100,9 @@ static void test_automatic_authority_and_eligibility_are_independent(void)
     input.automatic_target_available = true;
     input.automatic_target_c = 42.0f;
     jj_outputs_t output = step_once(input);
-    CHECK(output.heater_requested);
-    CHECK(output.active_authority == JJ_AUTHORITY_AUTOMATIC);
-    CHECK(output.thermal_state == JJ_THERMAL_HEATING);
+    check_cold(output, JJ_BLOCK_AUTO_POLICY_UNAVAILABLE); /* fully eligible; still
+                                                             cold until the bed-
+                                                             target policy exists */
 
     input.active_authority = JJ_AUTHORITY_NONE;
     check_cold(step_once(input), JJ_BLOCK_AUTO_AUTHORITY_UNAVAILABLE);

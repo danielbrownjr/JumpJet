@@ -249,17 +249,21 @@ static void test_automatic_survives_browser_loss_but_eligibility_fails_cold(void
     jj_control_snapshot_t automatic = mutate(
         &authority, &interlock, &lease, JJ_MUTATION_AUTOMATIC, 0.0f,
         "auto-a", &inputs, 1);
-    CHECK(evaluate(&interlock, &automatic, inputs).heater_requested);
+    jj_outputs_t output = evaluate(&interlock, &automatic, inputs);
+    CHECK(!output.heater_requested);
+    CHECK(output.block_reason == JJ_BLOCK_AUTO_POLICY_UNAVAILABLE);
 
     CHECK(jj_authority_tick(&authority, 1000));
     jj_control_snapshot_t expired;
     jj_authority_snapshot(&authority, 1000, &expired);
     CHECK(expired.mode == JJ_MODE_AUTOMATIC);
     CHECK(expired.active_authority == JJ_AUTHORITY_AUTOMATIC);
-    CHECK(evaluate(&interlock, &expired, inputs).heater_requested);
+    output = evaluate(&interlock, &expired, inputs);
+    CHECK(!output.heater_requested);
+    CHECK(output.block_reason == JJ_BLOCK_AUTO_POLICY_UNAVAILABLE);
 
     inputs.printer.online = false;
-    jj_outputs_t output = evaluate(&interlock, &expired, inputs);
+    output = evaluate(&interlock, &expired, inputs);
     CHECK(!output.heater_requested);
     CHECK(output.fault == JJ_FAULT_NONE);
     CHECK(output.block_reason == JJ_BLOCK_PRINTER_UNAVAILABLE);
