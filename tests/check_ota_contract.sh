@@ -21,7 +21,7 @@ grep -q 'jj_interlock_snapshot(&s_interlock)' "$app"
 grep -q 'portENTER_CRITICAL(&s_state_lock)' "$interlock"
 grep -q 'portEXIT_CRITICAL(&s_state_lock)' "$interlock"
 
-portal_line=$(grep -n 'jj_portal_start(&s_interlock)' "$app" | cut -d: -f1)
+portal_line=$(grep -n 'jj_portal_start(&s_interlock, &s_authority)' "$app" | cut -d: -f1)
 health_line=$(grep -n 'ulTaskNotifyTake(pdTRUE' "$app" | cut -d: -f1)
 valid_line=$(grep -n 'esp_ota_mark_app_valid_cancel_rollback' "$app" | cut -d: -f1)
 [ "$portal_line" -lt "$health_line" ]

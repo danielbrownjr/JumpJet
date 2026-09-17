@@ -67,14 +67,14 @@ implementation starts, and keep only the summary checkbox here.
 
 ## UI, API, and OTA
 
-- [ ] Finalize Jump Jet API v2 state and mutation schemas
+- [x] Define Jump Jet API v2 control-authority state and atomic mutation schemas
 - [ ] Add chamber, outlet, and case temperature telemetry with sensor status
 - [ ] Add target, heater duty, both fan states, mode, and commissioning state
 - [ ] Add PrusaLink connection, printer state, bed temperature/target, and sample age
 - [ ] Define optional Klipper/Moonraker integration for read-only printer state and bed-target telemetry, with the same stale-data fail-cold semantics as PrusaLink
 - [ ] Add visible interlocks, latched fault reason, and safe recovery guidance
 - [ ] Add settings for PrusaLink and the bed-target policy with strict bounds
-- [ ] Add revision/lease semantics for remote heat commands if manual remote heat is retained
+- [x] Add generation/revision/lease semantics for remote Manual commands
 - [ ] Test immediate pre-upload OTA rejection while heating
 - [ ] Test the second heater-state guard before selecting the uploaded image for boot
 - [ ] Test wrong-product, corrupt, interrupted, and rollback OTA paths
