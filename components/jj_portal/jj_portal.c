@@ -18,6 +18,8 @@
 
 #define JJ_CONTROL_BODY_MAX 2048
 
+static bool authorize(httpd_req_t *req, void *ctx);
+
 static const char *TAG = "jj_portal";
 static jj_interlock_t *s_interlock;
 static jj_authority_t *s_authority;
@@ -81,6 +83,14 @@ static esp_err_t send_error(
     cJSON_AddStringToObject(root, "error", jj_control_result_str(result));
     if (state) cJSON_AddItemToObject(root, "state", state);
     httpd_resp_set_status(req, status);
+    return send_json(req, root);
+}
+
+static esp_err_t send_unauthorized(httpd_req_t *req)
+{
+    cJSON *root = cJSON_CreateObject();
+    cJSON_AddStringToObject(root, "error", "unauthorized");
+    httpd_resp_set_status(req, "403 Forbidden");
     return send_json(req, root);
 }
 
@@ -329,6 +339,7 @@ static esp_err_t send_control_result(
 
 static esp_err_t acquire_post(httpd_req_t *req)
 {
+    if (!authorize(req, NULL)) return send_unauthorized(req);
     cJSON *json = read_json_body(req);
     jj_control_acquire_t request = {0};
     const cJSON *takeover = json
@@ -363,6 +374,7 @@ static bool parse_lease_request(
 
 static esp_err_t refresh_post(httpd_req_t *req)
 {
+    if (!authorize(req, NULL)) return send_unauthorized(req);
     cJSON *json = read_json_body(req);
     char lease_id[JJ_CONTROL_LEASE_ID_LEN + 1] = {0};
     uint32_t generation = 0;
@@ -380,6 +392,7 @@ static esp_err_t refresh_post(httpd_req_t *req)
 
 static esp_err_t heartbeat_post(httpd_req_t *req)
 {
+    if (!authorize(req, NULL)) return send_unauthorized(req);
     cJSON *json = read_json_body(req);
     char lease_id[JJ_CONTROL_LEASE_ID_LEN + 1] = {0};
     uint32_t generation = 0;
@@ -429,6 +442,7 @@ static bool parse_mutation(
 
 static esp_err_t mutate_post(httpd_req_t *req)
 {
+    if (!authorize(req, NULL)) return send_unauthorized(req);
     cJSON *json = read_json_body(req);
     jj_control_mutation_t request = {0};
     if (!json || !parse_mutation(json, &request)) {

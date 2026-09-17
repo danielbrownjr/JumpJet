@@ -31,4 +31,16 @@ grep -q 'return JJ_REMOTE_ACK_WHEN_HEALTHY' "$interlock"
 grep -q 'return JJ_REMOTE_ACK_AFTER_REVALIDATION' "$interlock"
 grep -q 'return JJ_REMOTE_ACK_NEVER' "$interlock"
 
+for fn in acquire_post refresh_post heartbeat_post mutate_post; do
+    body=$(awk -v fn="$fn" '
+        $0 ~ "^static esp_err_t "fn"\\(" { capture=1 }
+        capture { print }
+        capture && /^}/ { exit }
+    ' "$portal")
+    if ! printf '%s\n' "$body" | grep -q 'authorize(req'; then
+        echo "control handler $fn must call authorize(req) before mutating authority state" >&2
+        exit 1
+    fi
+done
+
 echo "control ordering/locking/fault-policy contract check: PASS"
